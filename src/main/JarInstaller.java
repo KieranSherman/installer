@@ -19,6 +19,7 @@ import javax.swing.JOptionPane;
  * Class models an installer that extracts contents from a jar file and moves them to a directory.
  * 
  * @author kieransherman
+ * @version 1.02
  *
  */
 public class JarInstaller {
