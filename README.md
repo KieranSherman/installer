@@ -1,3 +1,3 @@
 # installer
 
-Installer for the texgame.
+Installer for the textgame.
