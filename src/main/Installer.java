@@ -15,12 +15,11 @@ public class Installer {
 			e.printStackTrace();
 		}
 		
-		String destDir = getModifiedFilePath(System.getProperty("user.home")+"/Desktop/");
-		String folder = getModifiedFilePath("src/");
-		JarInstaller installer = new JarInstaller(getModifiedFilePath("/jarfiles/textgame.jar"), destDir);
+		String extractionDir = getModifiedFilePath(System.getProperty("user.home")+"/Desktop/");
+		JarInstaller installer = new JarInstaller(getModifiedFilePath("/jarfiles/textgame.jar"), extractionDir, "textgame");
 		
 		try {
-			installer.install(destDir, folder, InstallType.INCLUDE_ONLY, "files");
+			installer.install(InstallType.INCLUDE_ONLY, "files");
 		} catch (Exception e) {
 			installer.quit(e);
 		}
