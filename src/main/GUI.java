@@ -16,6 +16,8 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.border.EmptyBorder;
 
+import main.JarInstaller;
+
 /**
  * Class shows a visual representation of a {@link JarInstaller}'s progress.
  * 
