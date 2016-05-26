@@ -16,7 +16,7 @@ public class Installer {
 		}
 		
 		String extractionDir = getModifiedFilePath(System.getProperty("user.home")+"/Desktop/");
-		JarInstaller installer = new JarInstaller(getModifiedFilePath("/jarfiles/textgame.jar"), extractionDir, "textgame");
+		JarInstaller installer = new JarInstaller("textgame.jar", extractionDir, "textgame");
 		
 		try {
 			installer.install(InstallType.INCLUDE_ONLY, "files");
@@ -26,7 +26,7 @@ public class Installer {
 	}
 	
 	public static String getModifiedFilePath(String filePath) {
-		return filePath.replace("/", File.separator);
+		return filePath.replace("/", File.separator).replace("\\s+", "").trim();
 	}
 
 }

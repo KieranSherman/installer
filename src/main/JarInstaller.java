@@ -45,12 +45,12 @@ public class JarInstaller {
 	 * @param extractionName the name of the folder to extract to.
 	 */
 	public JarInstaller(String jarFilePath, String extractionDir, String extractionName) {
-		this.hide = true;
+		this.hide = System.getProperty("os.name").toLowerCase().contains("mac");
 		this.jarFilePath = jarFilePath;
 		this.extractionDir = extractionDir;
 		this.extractionName = hide ? "."+extractionName+File.separator : extractionName+File.separator;
 		this.srcFolder = "src"+File.separator;
-		this.tempJarFilePath = extractionDir+File.separator+"."+extractionName+"-loader";
+		this.tempJarFilePath = extractionDir+File.separator+"."+(extractionName+"-loader");
 
 		shutdownHook = new Thread() {
 			public void run() {
@@ -112,8 +112,8 @@ public class JarInstaller {
 		if(!gui.display(this))
 			throw new Exception("");
 		
-		if(getClass().getResourceAsStream(jarFilePath) == null)
-			throw new Exception("Missing files for instalation.");
+		if(getClass().getClassLoader().getResourceAsStream(jarFilePath) == null)
+			throw new Exception("Missing files required for installation.");
 		
 		Runtime.getRuntime().addShutdownHook(shutdownHook);
 		
@@ -122,8 +122,7 @@ public class JarInstaller {
 		
 		File tempJarFile = new File(tempJarFilePath);
 
-	    Files.copy(getClass().getResourceAsStream(Installer.getModifiedFilePath("/jarfiles/textgame.jar")), 
-	    		tempJarFile.toPath(), REPLACE_EXISTING);
+	    Files.copy(getClass().getClassLoader().getResourceAsStream(jarFilePath), tempJarFile.toPath(), REPLACE_EXISTING);
 		
 		JarFile jarFile = new JarFile(tempJarFile.getPath());
 		Enumeration<JarEntry> jarContents = jarFile.entries();
