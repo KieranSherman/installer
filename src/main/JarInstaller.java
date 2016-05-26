@@ -19,15 +19,19 @@ import javax.swing.JOptionPane;
  * Class models an installer that extracts contents from a jar file and moves them to a directory.
  * 
  * @author kieransherman
- * @version 1.02
+ * @version 1.03
  *
  */
 public class JarInstaller {
 	
-	private boolean hide;
-	private String gameFolder;
-	private String tempJarFilePath;
 	private String jarFilePath;
+	private String extractionDir;
+	private String extractionName;
+	private String srcFolder;
+	private String tempJarFilePath;
+	
+	private boolean hide;
+
 	private Thread shutdownHook;
 	private GUI gui;
 	
@@ -37,16 +41,20 @@ public class JarInstaller {
 	 * Creates a new installer with a location to the .jar file to install and a destination directory.
 	 * 
 	 * @param jarFilePath the path of the jar file.
-	 * @param destDir the path of the destination directroy.
+	 * @param extractionDir the path of the destination directroy.
+	 * @param extractionName the name of the folder to extract to.
 	 */
-	public JarInstaller(String jarFilePath, String destDir) {
+	public JarInstaller(String jarFilePath, String extractionDir, String extractionName) {
 		this.hide = true;
-		this.gameFolder = hide ? ".textgame/" : "textgame/";
-		this.tempJarFilePath = destDir+"/.loader";
+		this.jarFilePath = jarFilePath;
+		this.extractionDir = extractionDir;
+		this.extractionName = hide ? "."+extractionName+File.separator : extractionName+File.separator;
+		this.srcFolder = "src"+File.separator;
+		this.tempJarFilePath = extractionDir+File.separator+"."+extractionName+"-loader";
 
 		shutdownHook = new Thread() {
 			public void run() {
-				if(removeDirectory(new File(destDir+"textgame")))
+				if(removeDirectory(new File(extractionDir+(hide ? "." : "")+extractionName)))
 					System.out.println("Installation aborted cleanly");
 				else
 					System.err.println("Installation did not abort cleanly");
@@ -64,8 +72,7 @@ public class JarInstaller {
 		
 		Runtime.getRuntime().addShutdownHook(removeTemp);
 		
-		this.jarFilePath = jarFilePath;
-		this.gui = new GUI(shutdownHook);
+		gui = new GUI(shutdownHook);
 	}
 
 	/**
@@ -96,27 +103,27 @@ public class JarInstaller {
 	 * the .jar file itself is copied to the same directory.
 	 * 
 	 * @param extractionDir the directory to extract to.
-	 * @param gameSrcFolder the folder name to extract to.
+	 * @param srcFolder the folder name to extract to.
 	 * @param installType the installation type.
 	 * @param modifier the installation type modifier.
 	 * @throws Exception something goes wrong with the installation.
 	 */
-	public void install(String extractionDir, String gameSrcFolder, InstallType installType, String modifier) throws Exception {
+	public void install(InstallType installType, String modifier) throws Exception {
 		if(!gui.display(this))
 			throw new Exception("");
 		
 		if(getClass().getResourceAsStream(jarFilePath) == null)
 			throw new Exception("Missing files for instalation.");
 		
-		
 		Runtime.getRuntime().addShutdownHook(shutdownHook);
 		
 		installerThreads = new ArrayList<Thread>();
-		gui.log("fileDir: "+Installer.getModifiedFilePath(extractionDir+gameFolder+gameSrcFolder));
+		gui.log("fileDir: "+Installer.getModifiedFilePath(extractionDir+extractionName+srcFolder));
 		
 		File tempJarFile = new File(tempJarFilePath);
 
-	    Files.copy(getClass().getResourceAsStream(Installer.getModifiedFilePath("/jarfiles/textgame.jar")), tempJarFile.toPath(), REPLACE_EXISTING);
+	    Files.copy(getClass().getResourceAsStream(Installer.getModifiedFilePath("/jarfiles/textgame.jar")), 
+	    		tempJarFile.toPath(), REPLACE_EXISTING);
 		
 		JarFile jarFile = new JarFile(tempJarFile.getPath());
 		Enumeration<JarEntry> jarContents = jarFile.entries();
@@ -131,9 +138,9 @@ public class JarInstaller {
 			if(installType == InstallType.EXCLUDE && fileName.startsWith(modifier))
 				continue;
 			
-			createFileSystem(Installer.getModifiedFilePath(extractionDir+gameFolder+gameSrcFolder+fileName));
+			createFileSystem(Installer.getModifiedFilePath(extractionDir+extractionName+srcFolder+fileName));
 			
-			installerThreads.add(queueFile(jarFile, file, Installer.getModifiedFilePath(extractionDir+gameFolder+gameSrcFolder), fileName));
+			installerThreads.add(queueFile(jarFile, file, Installer.getModifiedFilePath(extractionDir+extractionName+srcFolder), fileName));
 			
 			gui.log("[Queueing: "+file.getName()+"]");
 		}
@@ -153,9 +160,9 @@ public class JarInstaller {
 		
 		jarFile.close();
 		
-		Files.copy(tempJarFile.toPath(), new File(Installer.getModifiedFilePath(extractionDir+gameFolder+"/run.jar")).toPath());
-		Files.move(new File(Installer.getModifiedFilePath(extractionDir+gameFolder)).toPath(), 
-				new File(Installer.getModifiedFilePath(extractionDir+unHide(gameFolder))).toPath(), StandardCopyOption.REPLACE_EXISTING);
+		Files.copy(tempJarFile.toPath(), new File(Installer.getModifiedFilePath(extractionDir+extractionName+"/run.jar")).toPath());
+		Files.move(new File(Installer.getModifiedFilePath(extractionDir+extractionName)).toPath(), 
+				new File(Installer.getModifiedFilePath(extractionDir+unHide(extractionName))).toPath(), StandardCopyOption.REPLACE_EXISTING);
 		
 		gui.log("Installation Finished");
 		gui.finish.setEnabled(true);
