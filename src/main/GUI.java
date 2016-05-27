@@ -138,6 +138,14 @@ public class GUI {
 	}
 	
 	/**
+	 * Logs a line of text.
+	 */
+	protected synchronized void setText(String line) {
+		if(info != null)
+			info.setText((line.length() > 55 ? line.substring(0, 53)+"..." : line).toUpperCase());
+	}
+	
+	/**
 	 * Disposes the window.
 	 */
 	protected void dispose() {
