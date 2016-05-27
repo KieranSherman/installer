@@ -1,6 +1,6 @@
 package main;
 
-import static java.nio.file.StandardCopyOption.*;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -32,8 +32,9 @@ public class JarInstaller {
 	
 	private boolean hide;
 
-	private Thread shutdownHook;
 	private GUI gui;
+	
+	private volatile Thread shutdownHook;
 	
 	private volatile ArrayList<Thread> installerThreads;
 	
@@ -45,34 +46,14 @@ public class JarInstaller {
 	 * @param extractionName the name of the folder to extract to.
 	 */
 	public JarInstaller(String jarFilePath, String extractionDir, String extractionName) {
-		this.hide = System.getProperty("os.name").toLowerCase().contains("mac");
-		this.jarFilePath = jarFilePath;
-		this.extractionDir = extractionDir;
-		this.extractionName = hide ? "."+extractionName+File.separator : extractionName+File.separator;
-		this.srcFolder = "src"+File.separator;
-		this.tempJarFilePath = extractionDir+File.separator+"."+(extractionName+"-loader");
+		this.hide = false;
+		this.jarFilePath = Installer.getModifiedFilePath(jarFilePath);
+		this.extractionDir = Installer.getModifiedFilePath(extractionDir);
+		this.extractionName = Installer.getModifiedFilePath(hide ? "."+extractionName+File.separator : extractionName+File.separator);
+		this.srcFolder = Installer.getModifiedFilePath("src"+File.separator);
+		this.tempJarFilePath = Installer.getModifiedFilePath(extractionDir+(extractionName+"-loader"));
 
-		shutdownHook = new Thread() {
-			public void run() {
-				if(removeDirectory(new File(extractionDir+(hide ? "." : "")+extractionName)))
-					System.out.println("Installation aborted cleanly");
-				else
-					System.err.println("Installation did not abort cleanly");
-			}
-		};
-		shutdownHook.setDaemon(false);
-		
-		Thread removeTemp = new Thread() {
-			public void run() {
-				File jarFileLocation = new File(tempJarFilePath);
-
-				jarFileLocation.delete();
-			}
-		};
-		
-		Runtime.getRuntime().addShutdownHook(removeTemp);
-		
-		gui = new GUI(shutdownHook);
+		gui = new GUI();
 	}
 
 	/**
@@ -109,13 +90,54 @@ public class JarInstaller {
 	 * @throws Exception something goes wrong with the installation.
 	 */
 	public void install(InstallType installType, String modifier) throws Exception {
+		System.out.println("will -r "+extractionDir+extractionName);
+		System.out.println("will -r "+tempJarFilePath);
+		
+		shutdownHook = new Thread() {
+			public void run() {
+				synchronized(installerThreads) {
+					for(Thread t : installerThreads)
+						t.interrupt();
+				}
+				
+				synchronized(installerThreads) {
+					for(Thread t : installerThreads) {
+						try {
+							t.join(4000);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+				
+				File dir = new File(extractionDir+extractionName);
+				File tmpJar = new File(tempJarFilePath);
+				
+				System.out.println(tmpJar.getPath());
+
+				if(removeDirectory(dir)) {
+					try {
+						tmpJar.delete();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+					System.out.println("Installation aborted cleanly");
+				} else
+					System.err.println("Installation did not abort cleanly");
+				
+				gui.dispose();
+				
+			}
+		};
+		Runtime.getRuntime().addShutdownHook(shutdownHook);
+		
+		gui.setShutdownHook(shutdownHook);
+		
 		if(!gui.display(this))
 			throw new Exception("");
 		
 		if(getClass().getClassLoader().getResourceAsStream(jarFilePath) == null)
 			throw new Exception("Missing files required for installation.");
-		
-		Runtime.getRuntime().addShutdownHook(shutdownHook);
 		
 		installerThreads = new ArrayList<Thread>();
 		gui.log("fileDir: "+Installer.getModifiedFilePath(extractionDir+extractionName+srcFolder));
@@ -141,7 +163,7 @@ public class JarInstaller {
 			
 			installerThreads.add(queueFile(jarFile, file, Installer.getModifiedFilePath(extractionDir+extractionName+srcFolder), fileName));
 			
-			gui.log("[Queueing: "+file.getName()+"]");
+			gui.log("[Queueing: "+Installer.getModifiedFilePath(file.getName())+"]");
 		}
 		
 		gui.progress.setMaximum(installerThreads.size());
@@ -178,8 +200,6 @@ public class JarInstaller {
 	 * Quits the installer with an exception.
 	 */
 	public void quit(Exception e) {
-		gui.dispose();
-		
 		if(e != null) {
 			e.printStackTrace();
 			
@@ -192,7 +212,7 @@ public class JarInstaller {
 	 * Creates a directory file system, provided it does not already exist.
 	 */
 	private void createFileSystem(String filePath) {
-		String[] fileSystem = filePath.split(File.separator);
+		String[] fileSystem = filePath.split(System.getProperty("os.name").contains("mac") ? "/" : "\\\\");
 		
 		String directories = "";
 		
@@ -218,11 +238,10 @@ public class JarInstaller {
 			return false;
 
 		String[] list = directory.list();
-
 		if(list != null) {
 			for(int i = 0; i < list.length; i++) {
 				File entry = new File(directory, list[i]);
-
+				
 				if(entry.isDirectory()) {
 					if(!removeDirectory(entry))
 						return false;
@@ -254,13 +273,19 @@ public class JarInstaller {
 					InputStream is = jar.getInputStream(file);
 					FileOutputStream fos = new FileOutputStream(new File(fileDir+fileName));
 					
-					while(is.available() > 0)
+					while(is.available() > 0 && !this.isInterrupted())
 						fos.write(is.read());
 					
+					fos.flush();
 					fos.close();
-					is.close();  
+					is.close(); 
 					
-					gui.log("INSTALLING "+this.getName());
+					if(this.isInterrupted()) {
+						gui.log("EXITING "+Installer.getModifiedFilePath(this.getName()));
+						return;
+					}
+					
+					gui.log("INSTALLING "+Installer.getModifiedFilePath(this.getName()));
 				} catch (IOException e) {
 					e.printStackTrace();
 					quit(e);
