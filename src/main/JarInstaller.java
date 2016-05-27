@@ -1,6 +1,6 @@
 package main;
 
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static java.nio.file.StandardCopyOption.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -24,6 +24,8 @@ import javax.swing.JOptionPane;
  */
 public class JarInstaller {
 	
+	private volatile ArrayList<Thread> threadList;
+	
 	private String jarFilePath;
 	private String extractionDir;
 	private String extractionName;
@@ -35,8 +37,6 @@ public class JarInstaller {
 	private GUI gui;
 	
 	private volatile Thread shutdownHook;
-	
-	private volatile ArrayList<Thread> installerThreads;
 	
 	/**
 	 * Creates a new installer with a location to the .jar file to install and a destination directory.
@@ -100,7 +100,6 @@ public class JarInstaller {
 		if(getClass().getClassLoader().getResourceAsStream(jarFilePath) == null)
 			throw new Exception("Missing files required for installation.");
 		
-		installerThreads = new ArrayList<Thread>();
 		gui.log("fileDir: "+Installer.getModifiedFilePath(extractionDir+extractionName+srcFolder));
 		
 		File tempJarFile = new File(tempJarFilePath);
@@ -110,6 +109,8 @@ public class JarInstaller {
 		JarFile jarFile = new JarFile(tempJarFile.getPath());
 		Enumeration<JarEntry> jarContents = jarFile.entries();
 		
+		threadList = new ArrayList<Thread>();
+
 		while(jarContents.hasMoreElements()) {
 			JarEntry file = (JarEntry)jarContents.nextElement();
 			String fileName = file.getName();
@@ -122,21 +123,19 @@ public class JarInstaller {
 			
 			createFileSystem(Installer.getModifiedFilePath(extractionDir+extractionName+srcFolder+fileName));
 			
-			installerThreads.add(queueFile(jarFile, file, Installer.getModifiedFilePath(extractionDir+extractionName+srcFolder), fileName));
-			
-			gui.log("[Queueing: "+Installer.getModifiedFilePath(file.getName())+"]");
+			threadList.add(queueFile(jarFile, file, Installer.getModifiedFilePath(extractionDir+extractionName+srcFolder), fileName));
 		}
 		
-		gui.progress.setMaximum(installerThreads.size());
+		gui.progress.setMaximum(threadList.size());
 		
-		synchronized(installerThreads) {
-			for(Thread install : installerThreads)
-				install.start();
-		}
-		
-		if(!installerThreads.isEmpty()) {
-			synchronized(this) {
-				this.wait();
+		synchronized(threadList) {
+			for(Thread thread : threadList) {
+				thread.start();
+				
+				if(thread.isAlive())
+					synchronized(this) {
+						this.wait();
+					}
 			}
 		}
 		
@@ -219,7 +218,7 @@ public class JarInstaller {
 			public void run() {
 				try {
 					File toWrite = new File(fileDir+fileName);
-					gui.log("Starting: "+toWrite.getPath());
+					gui.log("INSTALLING "+Installer.getModifiedFilePath(this.getName()));
 					
 					if(!toWrite.exists())
 						toWrite.createNewFile();
@@ -233,48 +232,29 @@ public class JarInstaller {
 					fos.flush();
 					fos.close();
 					is.close(); 
-					
-					if(isInterrupted()) {
-						gui.log("EXITING "+Installer.getModifiedFilePath(this.getName()));
-						installerThreads.remove(this);
-						return;
-					}
-					
-					gui.log("INSTALLING "+Installer.getModifiedFilePath(this.getName()));
 				} catch (IOException e) {
 					e.printStackTrace();
 					quit(e);
 				}
 				
-				synchronized(installerThreads) {
-					if(installerThreads.size() == 1) {
-						synchronized(obj) {
-							gui.log("finishing up");
-							obj.notifyAll();
-						}
-					}
-					
-					installerThreads.remove(this);
-					gui.progress.setValue(gui.progress.getValue()+1);
+				synchronized(obj) {
+					obj.notify();
 				}
+				
+				gui.progress.setValue(gui.progress.getValue()+1);
 			}
 					
 		};
 		
 		return writerThread;
 	}
-
+	
 	/**
 	 * Adds the shutdown hook to the installer.
 	 */
 	private void addShutdownHook() {
 		shutdownHook = new Thread() {
 			public void run() {
-				synchronized(installerThreads) {
-					for(Thread t : installerThreads)
-						t.interrupt();
-				}
-				
 				File dir = new File(extractionDir+extractionName);
 				File tmpJar = new File(tempJarFilePath);
 				
