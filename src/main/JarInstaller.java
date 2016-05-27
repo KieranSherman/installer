@@ -28,6 +28,8 @@ public class JarInstaller {
 	
 	private volatile ArrayList<Thread> threadList;
 	
+	private JarFile jarFile;
+	
 	private String jarFilePath;
 	private String extractionDir;
 	private String extractionName;
@@ -109,7 +111,7 @@ public class JarInstaller {
 
 	    Files.copy(getClass().getClassLoader().getResourceAsStream(jarFilePath), tempJarFile.toPath(), REPLACE_EXISTING);
 		
-		JarFile jarFile = new JarFile(tempJarFile.getPath());
+		jarFile = new JarFile(tempJarFile.getPath());
 		Enumeration<JarEntry> jarContents = jarFile.entries();
 		
 		threadList = new ArrayList<Thread>();
@@ -130,7 +132,7 @@ public class JarInstaller {
 		}
 		
 		gui.progress.setMaximum(threadList.size());
-		
+
 		synchronized(threadList) {
 			for(Thread thread : threadList) {
 				currentThread = thread;
@@ -275,13 +277,18 @@ public class JarInstaller {
 					e.printStackTrace();
 				}
 				
+				try {
+					jarFile.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				
 				File dir = new File(extractionDir+extractionName);
 				File tmpJar = new File(tempJarFilePath);
 				
 				System.out.println("does tmpJar even exist: "+tmpJar.exists());
 				System.out.println("path to tmpJar: "+tmpJar.getPath());
 				
-				tmpJar.setWritable(true);
 				if(removeDirectory(dir) && tmpJar.delete())
 					System.out.println("Installation aborted cleanly");
 				else
