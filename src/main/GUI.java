@@ -84,7 +84,7 @@ public class GUI {
 		cancel.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				System.exit(0);
+				System.exit(1);
 			}
 		});
 		

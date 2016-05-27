@@ -7,6 +7,8 @@ import main.JarInstaller.InstallType;
 public class Installer {
 	
 	public static void main(String [] args) {
+		System.out.println(System.getProperty("os.name"));
+		
 		try {
 			UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
 		} catch (Exception e) {
@@ -24,7 +26,7 @@ public class Installer {
 	}
 	
 	public static String getModifiedFilePath(String filePath) {
-		if(!System.getProperty("os.name").contains("mac"))
+		if(!System.getProperty("os.name").toLowerCase().contains("mac"))
 			return filePath.replaceAll("[/]", "\\\\");
 		
 		return filePath;

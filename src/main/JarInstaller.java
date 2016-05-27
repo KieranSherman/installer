@@ -54,6 +54,7 @@ public class JarInstaller {
 		this.tempJarFilePath = Installer.getModifiedFilePath(extractionDir+(extractionName+"-loader"));
 
 		gui = new GUI();
+		addShutdownHook();
 	}
 
 	/**
@@ -92,46 +93,6 @@ public class JarInstaller {
 	public void install(InstallType installType, String modifier) throws Exception {
 		System.out.println("will -r "+extractionDir+extractionName);
 		System.out.println("will -r "+tempJarFilePath);
-		
-		shutdownHook = new Thread() {
-			public void run() {
-				synchronized(installerThreads) {
-					for(Thread t : installerThreads)
-						t.interrupt();
-				}
-				
-				synchronized(installerThreads) {
-					for(Thread t : installerThreads) {
-						try {
-							t.join(4000);
-						} catch (InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
-				}
-				
-				File dir = new File(extractionDir+extractionName);
-				File tmpJar = new File(tempJarFilePath);
-				
-				System.out.println(tmpJar.getPath());
-
-				if(removeDirectory(dir)) {
-					try {
-						tmpJar.delete();
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-					System.out.println("Installation aborted cleanly");
-				} else
-					System.err.println("Installation did not abort cleanly");
-				
-				gui.dispose();
-				
-			}
-		};
-		Runtime.getRuntime().addShutdownHook(shutdownHook);
-		
-		gui.setShutdownHook(shutdownHook);
 		
 		if(!gui.display(this))
 			throw new Exception("");
@@ -189,13 +150,6 @@ public class JarInstaller {
 		gui.finish.setEnabled(true);
 	}
 	
-	private String unHide(String hidden) {
-		if(hidden.contains("."))
-			return hidden.replace(".", "");
-		
-		return hidden;
-	}
-	
 	/**
 	 * Quits the installer with an exception.
 	 */
@@ -212,14 +166,14 @@ public class JarInstaller {
 	 * Creates a directory file system, provided it does not already exist.
 	 */
 	private void createFileSystem(String filePath) {
-		String[] fileSystem = filePath.split(System.getProperty("os.name").contains("mac") ? "/" : "\\\\");
+		String[] fileSystem = filePath.split(System.getProperty("os.name").toLowerCase().contains("mac") ? "/" : "\\\\");
 		
 		String directories = "";
 		
 		for(int i = 0; i < fileSystem.length-1; i++)
 			directories += fileSystem[i]+File.separator;
 		
-		File f = new File(directories);
+		File f = new File(Installer.getModifiedFilePath(directories));
 		if(!f.exists()) {
 			f.mkdirs();
 			gui.log("** Created directory: "+f.getPath());
@@ -273,15 +227,16 @@ public class JarInstaller {
 					InputStream is = jar.getInputStream(file);
 					FileOutputStream fos = new FileOutputStream(new File(fileDir+fileName));
 					
-					while(is.available() > 0 && !this.isInterrupted())
+					while(is.available() > 0 && !isInterrupted())
 						fos.write(is.read());
 					
 					fos.flush();
 					fos.close();
 					is.close(); 
 					
-					if(this.isInterrupted()) {
+					if(isInterrupted()) {
 						gui.log("EXITING "+Installer.getModifiedFilePath(this.getName()));
+						installerThreads.remove(this);
 						return;
 					}
 					
@@ -303,9 +258,45 @@ public class JarInstaller {
 					gui.progress.setValue(gui.progress.getValue()+1);
 				}
 			}
+					
 		};
 		
 		return writerThread;
 	}
 
+	/**
+	 * Adds the shutdown hook to the installer.
+	 */
+	private void addShutdownHook() {
+		shutdownHook = new Thread() {
+			public void run() {
+				synchronized(installerThreads) {
+					for(Thread t : installerThreads)
+						t.interrupt();
+				}
+				
+				File dir = new File(extractionDir+extractionName);
+				File tmpJar = new File(tempJarFilePath);
+				
+				if(removeDirectory(dir) && tmpJar.delete())
+					System.out.println("Installation aborted cleanly");
+				else
+					System.err.println("Installation did not abort cleanly");
+			}
+		};
+		Runtime.getRuntime().addShutdownHook(shutdownHook);
+		
+		gui.setShutdownHook(shutdownHook);
+	}
+
+	/**
+	 * Returns an unhidden filename, if it was hidden to begin with.
+	 */
+	private String unHide(String hidden) {
+		if(hidden.contains("."))
+			return hidden.replace(".", "");
+		
+		return hidden;
+	}
+	
 }
