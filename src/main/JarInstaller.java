@@ -1,7 +1,9 @@
 package main;
 
-import static java.nio.file.StandardCopyOption.*;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -37,6 +39,7 @@ public class JarInstaller {
 	private GUI gui;
 	
 	private volatile Thread shutdownHook;
+	private volatile Thread currentThread;
 	
 	/**
 	 * Creates a new installer with a location to the .jar file to install and a destination directory.
@@ -130,6 +133,7 @@ public class JarInstaller {
 		
 		synchronized(threadList) {
 			for(Thread thread : threadList) {
+				currentThread = thread;
 				thread.start();
 				
 				if(thread.isAlive())
@@ -224,14 +228,23 @@ public class JarInstaller {
 						toWrite.createNewFile();
 					
 					InputStream is = jar.getInputStream(file);
+					BufferedInputStream bis = new BufferedInputStream(is);
+					
 					FileOutputStream fos = new FileOutputStream(new File(fileDir+fileName));
+					BufferedOutputStream bos = new BufferedOutputStream(fos);
 					
-					while(is.available() > 0 && !isInterrupted())
-						fos.write(is.read());
+					while(bis.available() > 0 && !isInterrupted())
+						bos.write(bis.read());
 					
-					fos.flush();
-					fos.close();
-					is.close(); 
+					bos.flush();
+					bos.close();
+					bis.close();
+					
+					if(isInterrupted()) {
+						gui.log("CANCELLING "+Installer.getModifiedFilePath(this.getName()));
+						return;
+					}
+					
 				} catch (IOException e) {
 					e.printStackTrace();
 					quit(e);
@@ -255,9 +268,20 @@ public class JarInstaller {
 	private void addShutdownHook() {
 		shutdownHook = new Thread() {
 			public void run() {
+				currentThread.interrupt();
+				try {
+					currentThread.join();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				
 				File dir = new File(extractionDir+extractionName);
 				File tmpJar = new File(tempJarFilePath);
 				
+				System.out.println("does tmpJar even exist: "+tmpJar.exists());
+				System.out.println("path to tmpJar: "+tmpJar.getPath());
+				
+				tmpJar.setWritable(true);
 				if(removeDirectory(dir) && tmpJar.delete())
 					System.out.println("Installation aborted cleanly");
 				else
