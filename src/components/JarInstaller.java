@@ -161,7 +161,7 @@ public final class JarInstaller {
 		
 		while(jarContents.hasMoreElements()) {
 			JarEntry file = (JarEntry)jarContents.nextElement();
-			String fileName = file.getName();
+			String fileName = FileModifier.getModifiedFilePath(file.getName());
 			
 			if(installType == InstallType.INCLUDE_ONLY && !fileName.startsWith(modifier))
 				continue;
@@ -333,10 +333,16 @@ public final class JarInstaller {
 	 * Aborts the installation.
 	 */
 	protected boolean abort() {
-		File dir = new File(extractionDirFilePath+extractionDirFileName);
-		File tempJar = new File(tempJarFilePath);
+		File dir = null;
+		if(extractionDirFilePath != null && extractionDirFileName != null)
+			dir = new File(extractionDirFilePath+extractionDirFileName);
 		
-		return (!tempJar.exists() || tempJar.delete()) && (!dir.exists() || FileModifier.removeDirectory(dir));
+		File tempJar = null;
+		if(tempJarFilePath != null)
+			tempJar = new File(tempJarFilePath);
+		
+		return ( tempJar == null || (!tempJar.exists() || tempJar.delete())) && 
+				dir == null || ((!dir.exists() || FileModifier.removeDirectory(dir)) );
 	}
 	
 	/**
