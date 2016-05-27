@@ -1,6 +1,7 @@
-package main;
+package components;
 
 import javax.swing.JFrame;
+import javax.swing.UIManager;
 
 public abstract class JarInstallerUI {
 	
@@ -9,6 +10,12 @@ public abstract class JarInstallerUI {
 	protected JarInstaller installer;
 	
 	public JarInstallerUI(JarInstaller installer) {
+		try {
+			UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
 		this.installer = installer;
 	}
 	

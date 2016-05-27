@@ -1,4 +1,4 @@
-package main;
+package components;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -16,7 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.border.EmptyBorder;
 
-import main.JarInstaller.InstallType;
+import components.JarInstaller.InstallType;
 
 /**
  * Class shows a visual representation of a {@link JarInstaller}'s progress.
@@ -40,8 +40,8 @@ public class DefaultUI extends JarInstallerUI {
 	
 	@Override
 	protected void load() {
-		installer.setExtractionDir(Installer.getModifiedFilePath(System.getProperty("user.home")+"/Desktop/"));
-		installer.setExtractionName(Installer.getModifiedFilePath("textgame/"));
+		installer.setExtractionDir(JarInstaller.getModifiedFilePath(System.getProperty("user.home")+"/Desktop/"));
+		installer.setExtractionName(JarInstaller.getModifiedFilePath("textgame/"));
 		
 		try {
 			installer.install(InstallType.INCLUDE_ONLY, "files");
