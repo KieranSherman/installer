@@ -17,6 +17,7 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
@@ -139,8 +140,8 @@ public class GraphicalUI extends JarInstallerUI {
 				new Thread() {
 					public void run() {
 						try {
-							installer.setExtractionDir(JarInstaller.getModifiedFilePath(extractionDir));
-							installer.setExtractionName(JarInstaller.getModifiedFilePath(extractionName+"/"));
+							installer.setExtractionDir(extractionDir);
+							installer.setExtractionName(extractionName);
 							installer.install(InstallType.INCLUDE_ONLY, "files");
 						} catch (Exception e) {
 							installer.quit(e);
@@ -250,6 +251,7 @@ public class GraphicalUI extends JarInstallerUI {
 				directoryField.setEnabled(false);
 				nameConfirm.setEnabled(true);
 				nameField.setEditable(true);
+				nameField.selectAll();
 				
 				extractionDir = directoryField.getText()+File.separator;
 			}
@@ -273,8 +275,12 @@ public class GraphicalUI extends JarInstallerUI {
 		finishButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				Runtime.getRuntime().removeShutdownHook(shutdownHook);
-				installer.removeTempJarFile();
 				window.dispose();
+				
+				if(!installer.finish())
+					JOptionPane.showMessageDialog(null, "Did not finish installation cleanly.\nCheck directory for .installation.");
+					
+				installer.quit(null);
 			}
 		});
 
@@ -335,7 +341,7 @@ public class GraphicalUI extends JarInstallerUI {
 	 * Sets the finish button to enable.
 	 */
 	@Override
-	protected void setEnabled(boolean enabled) {
+	protected void setFinishable(boolean enabled) {
 		progressField.setForeground(light_gold);
 		finishButton.setEnabled(true);
 		finishButton.setBorder(BorderFactory.createCompoundBorder(new EmptyBorder(30, 30, 30, 30),
