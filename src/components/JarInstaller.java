@@ -326,7 +326,7 @@ public final class JarInstaller {
 					"Error:\n"+e.getMessage(), "Installation Error", JOptionPane.ERROR_MESSAGE);
 		}
 		
-		System.exit(1);
+		System.exit(0);
 	}
 	
 	/**
