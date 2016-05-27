@@ -229,6 +229,9 @@ public class GraphicalUI extends JarInstallerUI {
 			
 			@Override
 			public void mousePressed(MouseEvent e) {
+				if(!directoryField.isEnabled())
+					return;
+				
 				JFileChooser fileChooser = new JFileChooser();
 				fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 				
