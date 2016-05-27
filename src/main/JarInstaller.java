@@ -103,7 +103,7 @@ public class JarInstaller {
 				synchronized(installerThreads) {
 					for(Thread t : installerThreads) {
 						try {
-							t.join(5000);
+							t.join(4000);
 						} catch (InterruptedException e) {
 							e.printStackTrace();
 						}
