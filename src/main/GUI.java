@@ -84,7 +84,7 @@ public class GUI {
 		cancel.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				System.exit(0);
+				System.exit(1);
 			}
 		});
 		
@@ -133,6 +133,14 @@ public class GUI {
 	protected synchronized void log(String line) {
 		System.out.println(line);
 		
+		if(info != null)
+			info.setText((line.length() > 55 ? line.substring(0, 53)+"..." : line).toUpperCase());
+	}
+	
+	/**
+	 * Logs a line of text.
+	 */
+	protected synchronized void setText(String line) {
 		if(info != null)
 			info.setText((line.length() > 55 ? line.substring(0, 53)+"..." : line).toUpperCase());
 	}
