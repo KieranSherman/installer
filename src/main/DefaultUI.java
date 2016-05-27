@@ -22,28 +22,25 @@ import javax.swing.border.EmptyBorder;
  * @author kieransherman
  *
  */
-public class GUI {
+public class DefaultUI extends JarInstallerUI {
 	
-	protected volatile JProgressBar progress;
-	protected volatile JLabel info;
-	protected JButton finish;
-	protected JFrame window;
-	protected Font verdana = new Font("Verdana", Font.PLAIN, 11);
-	protected Thread shutdownHook;
+	private Thread shutdownHook;
 	
-	protected void setShutdownHook(Thread shutdownHook) {
-		this.shutdownHook = shutdownHook;
-	}
+	private Font verdana = new Font("Verdana", Font.PLAIN, 11);
+	
+	private volatile JProgressBar progress;
+	private volatile JLabel info;
+	private JButton finish;
 	
 	/**
 	 * Displays a GUI representation of the progress.
 	 */
-	protected boolean display(JarInstaller obj) {
+	@Override
+	protected boolean display() {
 		if(shutdownHook == null)
 			return false;
 		
 		progress = new JProgressBar();
-		//progress.setOpaque(false);
 		progress.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.BLACK));
 		progress.setStringPainted(true);
 		progress.setFont(verdana);
@@ -128,9 +125,18 @@ public class GUI {
 	}
 	
 	/**
+	 * Sets the finish button to enable.
+	 */
+	@Override
+	protected void setEnabled(boolean enabled) {
+		finish.setEnabled(true);
+	}
+	
+	/**
 	 * Logs a line of text.
 	 */
-	protected synchronized void log(String line) {
+	@Override
+	protected void log(String line) {
 		System.out.println(line);
 		
 		if(info != null)
@@ -138,18 +144,41 @@ public class GUI {
 	}
 	
 	/**
-	 * Logs a line of text.
+	 * Sets the text value of info.
 	 */
+	@Override
 	protected synchronized void setText(String line) {
 		if(info != null)
 			info.setText((line.length() > 55 ? line.substring(0, 53)+"..." : line).toUpperCase());
+	}
+
+	/**
+	 * Sets the maximum progress of the progress bar.
+	 */
+	@Override
+	protected void setMaximumProgress(int value) {
+		progress.setMaximum(value);
+	}
+	
+	/**
+	 * Increments the progress bar by a value.
+	 */
+	@Override
+	protected void incrementProgress(int value) {
+		progress.setValue(progress.getValue()+value);
 	}
 	
 	/**
 	 * Disposes the window.
 	 */
+	@Override
 	protected void dispose() {
 		window.dispose();
+	}
+
+	@Override
+	protected void setShutdownHook(Thread shutdownHook) {
+		this.shutdownHook = shutdownHook;
 	}
 	
 }

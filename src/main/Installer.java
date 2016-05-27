@@ -2,8 +2,6 @@ package main;
 
 import javax.swing.UIManager;
 
-import main.JarInstaller.InstallType;
-
 public class Installer {
 	
 	public static void main(String [] args) {
@@ -18,11 +16,13 @@ public class Installer {
 		String extractionDir = getModifiedFilePath(System.getProperty("user.home")+"/Desktop/");
 		JarInstaller installer = new JarInstaller("textgame.jar", extractionDir, "textgame");
 		
-		try {
-			installer.install(InstallType.INCLUDE_ONLY, "files");
-		} catch (Exception e) {
-			installer.quit(e);
-		}
+		installer.setUI(new GraphicalUI(installer));
+		
+//		try {
+//			installer.install(InstallType.INCLUDE_ONLY, "files");
+//		} catch (Exception e) {
+//			installer.quit(e);
+//		}
 	}
 	
 	public static String getModifiedFilePath(String filePath) {
