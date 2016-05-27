@@ -40,8 +40,6 @@ public class JarInstaller {
 	private String srcFolder;
 	private String tempJarFilePath;
 	
-	private boolean hide;
-
 	private JarInstallerUI jarInstallerUI;
 	
 	private volatile Thread shutdownHook;
@@ -54,11 +52,8 @@ public class JarInstaller {
 	 * @param extractionDir the path of the destination directroy.
 	 * @param extractionName the name of the folder to extract to.
 	 */
-	public JarInstaller(String jarFilePath, String extractionDir, String extractionName) {
-		this.hide = false;
+	public JarInstaller(String jarFilePath) {
 		this.jarFilePath = Installer.getModifiedFilePath(jarFilePath);
-		this.extractionDir = Installer.getModifiedFilePath(extractionDir);
-		this.extractionName = Installer.getModifiedFilePath(hide ? "."+extractionName+File.separator : extractionName+File.separator);
 		this.srcFolder = Installer.getModifiedFilePath("src"+File.separator);
 		this.tempJarFilePath = Installer.getModifiedFilePath(extractionDir+(extractionName+"-loader"));
 		this.threadList = new ArrayList<Thread>();
@@ -72,13 +67,14 @@ public class JarInstaller {
 	public void setUI(JarInstallerUI jarInstallerUI) {
 		this.jarInstallerUI = jarInstallerUI;
 		addShutdownHook();
+		this.jarInstallerUI.load();
 	}
 	
 	public void setExtractionName(String extractionName) {
 		this.extractionName = extractionName;
 	}
 	
-	public void setExtractinonDir(String extractionDir) {
+	public void setExtractionDir(String extractionDir) {
 		this.extractionDir = extractionDir;
 	}
 
