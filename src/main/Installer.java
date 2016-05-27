@@ -1,13 +1,13 @@
 package main;
 
-import components.DefaultUI;
 import components.JarInstaller;
+import components.JarInstallerUI.InstallationUI;
 
 public class Installer {
 	
 	public static void main(String [] args) {
-		JarInstaller installer = new JarInstaller("textgame.jar");
-		installer.setUI(new DefaultUI(installer));
+		JarInstaller jarInstaller = new JarInstaller("textgame.jar");
+		jarInstaller.startInstallation(InstallationUI.DEFAULT);
 	}
 	
 }

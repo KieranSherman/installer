@@ -9,6 +9,11 @@ public abstract class JarInstallerUI {
 	protected Thread shutdownHook;
 	protected JarInstaller installer;
 	
+	public enum InstallationUI {
+		GRAPHICAL, 
+		DEFAULT;
+	}
+	
 	/**
 	 * Creates a new JarInstallerUI object with a JarInstaller reference.  Also
 	 * sets the look and feel to MetalLookAndFeel.
@@ -28,7 +33,7 @@ public abstract class JarInstallerUI {
 	protected abstract boolean display();
 	protected abstract void load();
 	protected abstract void setShutdownHook(Thread shutdownHook);
-	protected abstract void setEnabled(boolean enabled);
+	protected abstract void setFinishable(boolean enabled);
 	protected abstract void log(String line);
 	protected abstract void setText(String line);
 	protected abstract void setMaximumProgress(int value);

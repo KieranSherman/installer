@@ -17,95 +17,145 @@ import java.util.jar.JarFile;
 
 import javax.swing.JOptionPane;
 
+import components.JarInstallerUI.InstallationUI;
+
 /**
- * Class models an installer that extracts contents from a jar file and moves them to a directory.
+ * Class models an installer that extracts contents from a .jar file and moves them to a directory.
  * 
  * @author kieransherman
- * @version 1.05
+ * @version 1.06
  *
  */
-public class JarInstaller {
+public final class JarInstaller {
 	
 	public enum InstallType {
 		INCLUDE_ONLY, EXCLUDE, ALL;
 	}
 	
+	protected JarFile jarFile;
+	
+	protected String jarFilePath;
+	protected String tempJarFileName;
+	protected String tempJarFilePath;
+	protected String extractionDirFilePath;
+	protected String extractionDirFileName;
+	protected String sourceFolderFileName;
+	
+	protected JarInstallerUI jarInstallerUI;
+	
+	protected volatile Thread shutdownHook;
+	protected volatile Thread currentThread;
+	
 	private volatile ArrayList<Thread> threadList;
 	
-	private JarFile jarFile;
-	
-	private String jarFilePath;
-	private String extractionDir;
-	private String extractionName;
-	private String srcFolder;
-	private String tempJarFilePath;
-	
-	private JarInstallerUI jarInstallerUI;
-	
-	private volatile Thread shutdownHook;
-	private volatile Thread currentThread;
-	
 	/**
-	 * Creates a new installer with a location to the .jar file to install and a destination directory.
+	 * Creates a new installer with a location to the .jar file to install.
 	 * 
-	 * @param jarFilePath the path of the jar file.
-	 * @param extractionDir the path of the destination directroy.
-	 * @param extractionName the name of the folder to extract to.
+	 * @param jarFilePath the location of the .jar file to install.
 	 */
 	public JarInstaller(String jarFilePath) {
-		this.jarFilePath = JarInstaller.getModifiedFilePath(jarFilePath);
-		this.srcFolder = JarInstaller.getModifiedFilePath("src"+File.separator);
-		this.tempJarFilePath = JarInstaller.getModifiedFilePath(extractionDir+(extractionName+"-loader"));
+		this.jarFilePath = jarFilePath;
 		this.threadList = new ArrayList<Thread>();
-	}
-	
-	/**
-	 * Set the UI of the installer.
-	 * 
-	 * @param jarInstallerUI the UI.
-	 */
-	public void setUI(JarInstallerUI jarInstallerUI) {
-		this.jarInstallerUI = jarInstallerUI;
-		addShutdownHook();
-		this.jarInstallerUI.load();
-	}
-	
-	/**
-	 * Sets the extraction folder's name.
-	 */
-	protected void setExtractionName(String extractionName) {
-		this.extractionName = extractionName;
-	}
-	
-	/**
-	 * Sets the path to the extraction directory.
-	 */
-	protected void setExtractionDir(String extractionDir) {
-		this.extractionDir = extractionDir;
-	}
 
+		setTempJarFileName(".installation");
+		setSourceFolderName("src");
+	}
+	
+	/**
+	 * Set the source folder name of the extracted contents.
+	 */
+	public void setSourceFolderName(String srcFolderName) {
+		this.sourceFolderFileName = srcFolderName.endsWith("/") ? srcFolderName : srcFolderName+"/";
+	}
+	
+	/**
+	 * Set the temporary jar's file name.
+	 */
+	public void setTempJarFileName(String tempJarFileName) {
+		this.tempJarFileName = tempJarFileName;
+	}
+	
+	/**
+	 * Begins the installation using a specific installation user interface.
+	 * 
+	 * @param installationUI the UI used to install the .jar file.
+	 */
+	public void startInstallation(InstallationUI installationUI) {
+		switch(installationUI) {
+			case GRAPHICAL:
+				jarInstallerUI = new GraphicalUI(this);
+				break;
+				
+			case DEFAULT:
+				jarInstallerUI = new DefaultUI(this);
+				break;
+				
+			default:
+				jarInstallerUI = new DefaultUI(this);
+		}
+		
+		addShutdownHook();
+		
+		jarInstallerUI.load();
+	}
+	
+	
+	
 	/**
 	 * Opens a .jar file and extracts its files based on the {@link #InstallType} to a directory.  Then,
 	 * the .jar file itself is copied to the same directory.
 	 * 
-	 * @param extractionDir the directory to extract to.
-	 * @param srcFolder the folder name to extract to.
 	 * @param installType the installation type.
 	 * @param modifier the installation type modifier.
 	 * @throws Exception something goes wrong with the installation.
 	 */
 	protected void install(InstallType installType, String modifier) throws Exception {
 		if(jarInstallerUI == null || !jarInstallerUI.display())
-			throw new Exception("");
+			throw new Exception("<NULL>");
+		
+		tempJarFilePath = extractionDirFilePath+tempJarFileName;
+		File tempJarFile = new File(tempJarFilePath);
+		
+		convertFilePathsToOS();
 		
 		if(getClass().getClassLoader().getResourceAsStream(jarFilePath) == null)
 			throw new Exception("Missing files required for installation.");
 		
-		jarInstallerUI.log("fileDir: "+JarInstaller.getModifiedFilePath(extractionDir+extractionName+srcFolder));
+	    queueInstallerThreads(tempJarFile, installType, modifier);
+		executeInstallerThreads();
+		finishInstallation(tempJarFile);
+	}
+	
+	/**
+	 * Converts all the file paths to an operating system-specific format.
+	 */
+	private void convertFilePathsToOS() {
+		try {
+			jarFilePath = FileModifier.getModifiedFilePath(jarFilePath);
+			tempJarFileName = FileModifier.getModifiedFilePath(tempJarFileName);
+			tempJarFilePath = FileModifier.getModifiedFilePath(tempJarFilePath);
+			extractionDirFileName = FileModifier.getModifiedFilePath(extractionDirFileName);
+			extractionDirFilePath = FileModifier.getModifiedFilePath(extractionDirFilePath);
+			sourceFolderFileName = FileModifier.getModifiedFilePath(sourceFolderFileName);
+		} catch (Exception e) {
+			quit(e);
+		}
 		
-		File tempJarFile = new File(tempJarFilePath);
+		System.out.println("j_fp:   "+jarFilePath);
+		System.out.println("tj_fn:  "+tempJarFileName);
+		System.out.println("tj_fp:  "+tempJarFilePath);
+		System.out.println("ed_fn:  "+extractionDirFileName);
+		System.out.println("ed_fp:  "+extractionDirFilePath);
+		System.out.println("sf_fn:  "+sourceFolderFileName);
+		System.out.println();
+	}
+	
+	/**
+	 * Creates and queues all the threads needed for installation.
+	 */
+	private void queueInstallerThreads(File tempJarFile, InstallType installType, String modifier) throws Exception {
 	    Files.copy(getClass().getClassLoader().getResourceAsStream(jarFilePath), tempJarFile.toPath(), REPLACE_EXISTING);
-		
+
 		jarFile = new JarFile(tempJarFile.getPath());
 		Enumeration<JarEntry> jarContents = jarFile.entries();
 		
@@ -119,13 +169,18 @@ public class JarInstaller {
 			if(installType == InstallType.EXCLUDE && fileName.startsWith(modifier))
 				continue;
 			
-			createFileSystem(JarInstaller.getModifiedFilePath(extractionDir+extractionName+srcFolder+fileName));
+			FileModifier.createFileSystem(extractionDirFilePath+extractionDirFileName+sourceFolderFileName+fileName);
 			
-			threadList.add(queueFile(jarFile, file, JarInstaller.getModifiedFilePath(extractionDir+extractionName+srcFolder), fileName));
+			threadList.add(queueFile(jarFile, file, extractionDirFilePath+extractionDirFileName+sourceFolderFileName, fileName));
 		}
 		
-		jarInstallerUI.setMaximumProgress(threadList.size());
-
+		jarInstallerUI.setMaximumProgress(threadList.size()+1);
+	}
+	
+	/**
+	 * Executes all the installer threads.
+	 */
+	private void executeInstallerThreads() throws Exception {
 		synchronized(threadList) {
 			for(Thread thread : threadList) {
 				currentThread = thread;
@@ -139,72 +194,27 @@ public class JarInstaller {
 		}
 		
 		jarFile.close();
+	}
+	
+	/**
+	 * Finishes up the installation.
+	 */
+	private void finishInstallation(File tempJarFile) throws Exception {
+		jarInstallerUI.log("INSTALLING JARFILE: "+tempJarFile.getName());
 		
-		Files.copy(tempJarFile.toPath(), new File(JarInstaller.getModifiedFilePath(extractionDir+extractionName+"/run.jar")).toPath());
-		Files.move(new File(JarInstaller.getModifiedFilePath(extractionDir+extractionName)).toPath(), 
-				new File(JarInstaller.getModifiedFilePath(extractionDir+unHide(extractionName))).toPath(), StandardCopyOption.REPLACE_EXISTING);
+		String extractionFolder = extractionDirFilePath+extractionDirFileName;
+		
+		Files.copy(tempJarFile.toPath(), new File(extractionFolder+"/run.jar").toPath(), 
+				StandardCopyOption.REPLACE_EXISTING);
+		
+		if(extractionDirFileName.startsWith("."))
+			Files.move(new File(extractionFolder).toPath(), 
+					new File(extractionDirFilePath+extractionDirFileName.substring(1)).toPath(), StandardCopyOption.REPLACE_EXISTING);
+	
+		jarInstallerUI.incrementProgress(1);
 		
 		jarInstallerUI.log("INSTALLATION FINISHED");
-		jarInstallerUI.setEnabled(true);
-	}
-	
-	/**
-	 * Quits the installer with an exception.
-	 */
-	protected void quit(Exception e) {
-		if(e != null && !(e.getMessage() != null)) {
-			e.printStackTrace();
-			
-			JOptionPane.showMessageDialog(null, "There was a problem with the installation.\n\n"+
-					"Error:\n"+e.getMessage(), "Installation Error", JOptionPane.ERROR_MESSAGE);
-		}
-	}
-	
-	/**
-	 * Creates a directory file system, provided it does not already exist.
-	 */
-	private void createFileSystem(String filePath) {
-		String[] fileSystem = filePath.split(System.getProperty("os.name").toLowerCase().contains("mac") ? "/" : "\\\\");
-		
-		String directories = "";
-		
-		for(int i = 0; i < fileSystem.length-1; i++)
-			directories += fileSystem[i]+File.separator;
-		
-		File f = new File(JarInstaller.getModifiedFilePath(directories));
-		if(!f.exists()) {
-			f.mkdirs();
-			jarInstallerUI.log("** Created directory: "+f.getPath());
-		}
-	}
-	
-	/**
-	 * Recursively removes a directory and all of its subfolders and files.
-	 */
-	private boolean removeDirectory(File directory) {
-		if(directory == null)
-			return false;
-		if(!directory.exists())
-			return true;
-		if(!directory.isDirectory())
-			return false;
-
-		String[] list = directory.list();
-		if(list != null) {
-			for(int i = 0; i < list.length; i++) {
-				File entry = new File(directory, list[i]);
-				
-				if(entry.isDirectory()) {
-					if(!removeDirectory(entry))
-						return false;
-				} else {
-					if(!entry.delete())
-						return false;
-				}
-			}
-		}
-
-		return directory.delete();
+		jarInstallerUI.setFinishable(true);
 	}
 	
 	/**
@@ -216,7 +226,7 @@ public class JarInstaller {
 		Thread writerThread = new Thread(fileName) {
 			public void run() {
 				try {
-					String log = "INSTALLING "+JarInstaller.getModifiedFilePath(this.getName());
+					String log = "INSTALLING "+this.getName();
 					jarInstallerUI.log(log);
 
 					File toWrite = new File(fileDir+fileName);
@@ -234,7 +244,7 @@ public class JarInstaller {
 					long fileSize = file.getSize();
 					int update = 10000;
 					
-					while(bis.available() > 0 && !isInterrupted()) {
+					while(bis.available() > 0 && !this.isInterrupted()) {
 						bos.write(bis.read());
 						bytesRead++;
 						
@@ -246,11 +256,10 @@ public class JarInstaller {
 					bos.close();
 					bis.close();
 					
-					if(isInterrupted()) {
-						jarInstallerUI.log("CANCELLING "+JarInstaller.getModifiedFilePath(this.getName()));
+					if(this.isInterrupted()) {
+						jarInstallerUI.log("CANCELLING "+this.getName());
 						return;
 					}
-					
 				} catch (IOException e) {
 					e.printStackTrace();
 					quit(e);
@@ -269,17 +278,9 @@ public class JarInstaller {
 	}
 	
 	/**
-	 * Removes the temporary jar file.
-	 */
-	protected boolean removeTempJarFile() {
-		File tmpJar = new File(tempJarFilePath);
-		return tmpJar.delete();
-	}
-	
-	/**
 	 * Adds the shutdown hook to the installer.
 	 */
-	private void addShutdownHook() {
+	protected void addShutdownHook() {
 		shutdownHook = new Thread() {
 			public void run() {
 				if(currentThread != null) {
@@ -299,12 +300,14 @@ public class JarInstaller {
 					}
 				}
 				
-				File dir = new File(extractionDir+extractionName);
-				
-				if(removeDirectory(dir) && removeTempJarFile())
+				if(abort())
 					System.out.println("INSTALLATION ABORTED CLEANLY");
-				else
+				else {
 					System.err.println("INSTALLATION DID NOT ABORT CLEANLY");
+					System.err.println("CHECK: ["+extractionDirFilePath+"] FOR UNWANTED FILES.");
+
+					JOptionPane.showMessageDialog(null, "Installation did not abort cleanly\nCheck: ["+extractionDirFilePath+"] for unwanted files.");
+				}
 			}
 		};
 		
@@ -313,23 +316,49 @@ public class JarInstaller {
 	}
 
 	/**
-	 * Returns an unhidden filename, if it was hidden to begin with.
+	 * Quits the installer with an exception.
 	 */
-	private String unHide(String hidden) {
-		if(hidden.contains("."))
-			return hidden.replace(".", "");
+	protected void quit(Exception e) {
+		if(e != null && !e.getMessage().equals("<NULL>")) {
+			e.printStackTrace();
+			
+			JOptionPane.showMessageDialog(null, "There was a problem with the installation.\n\n"+
+					"Error:\n"+e.getMessage(), "Installation Error", JOptionPane.ERROR_MESSAGE);
+		}
 		
-		return hidden;
+		System.exit(1);
 	}
 	
 	/**
-	 * Returns a new String containing operating system-specific file separators.
+	 * Aborts the installation.
 	 */
-	public static String getModifiedFilePath(String filePath) {
-		if(!System.getProperty("os.name").toLowerCase().contains("mac"))
-			return filePath.replaceAll("[/]", "\\\\");
+	protected boolean abort() {
+		File dir = new File(extractionDirFilePath+extractionDirFileName);
+		File tempJar = new File(tempJarFilePath);
 		
-		return filePath;
+		return (!tempJar.exists() || tempJar.delete()) && (!dir.exists() || FileModifier.removeDirectory(dir));
+	}
+	
+	/**
+	 * Sets the extraction folder's name.
+	 */
+	protected void setExtractionName(String extractionName) {
+		this.extractionDirFileName = extractionName.endsWith("/") ? extractionName : extractionName+"/";
+	}
+	
+	/**
+	 * Sets the path to the extraction directory.
+	 */
+	protected void setExtractionDir(String extractionDir) {
+		this.extractionDirFilePath = extractionDir.endsWith("/") ? extractionDir : extractionDir+"/";
+	}
+	
+	/**
+	 * Finishes the installation.
+	 */
+	protected boolean finish() {
+		File tempJar = new File(tempJarFilePath);
+		return (!tempJar.exists() || tempJar.delete());
 	}
 	
 }

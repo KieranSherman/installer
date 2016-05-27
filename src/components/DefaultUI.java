@@ -50,14 +50,17 @@ public class DefaultUI extends JarInstallerUI {
 	 */
 	@Override
 	protected void load() {
-		installer.setExtractionDir(JarInstaller.getModifiedFilePath(System.getProperty("user.home")+"/Desktop/"));
-		installer.setExtractionName(JarInstaller.getModifiedFilePath("textgame/"));
+		installer.setExtractionDir(System.getProperty("user.home")+"/Desktop");
+		installer.setExtractionName(".textgame");
 		
 		try {
 			installer.install(InstallType.INCLUDE_ONLY, "files");
 		} catch (Exception e) {
 			installer.quit(e);
 		}
+		
+		if(!installer.finish())
+			JOptionPane.showMessageDialog(null, "Did not finish installation cleanly.\nCheck directory for "+installer.tempJarFileName);
 	}
 	
 	/**
@@ -153,7 +156,7 @@ public class DefaultUI extends JarInstallerUI {
 	 * Sets the finish button to enable.
 	 */
 	@Override
-	protected void setEnabled(boolean enabled) {
+	protected void setFinishable(boolean enabled) {
 		finish.setEnabled(true);
 	}
 	
