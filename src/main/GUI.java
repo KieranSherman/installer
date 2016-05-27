@@ -31,10 +31,7 @@ public class GUI {
 	protected Font verdana = new Font("Verdana", Font.PLAIN, 11);
 	protected Thread shutdownHook;
 	
-	/**
-	 * Creates a new GUI object with a shutdown hook.
-	 */
-	protected GUI(Thread shutdownHook) {
+	protected void setShutdownHook(Thread shutdownHook) {
 		this.shutdownHook = shutdownHook;
 	}
 	
@@ -42,7 +39,11 @@ public class GUI {
 	 * Displays a GUI representation of the progress.
 	 */
 	protected boolean display(JarInstaller obj) {
+		if(shutdownHook == null)
+			return false;
+		
 		progress = new JProgressBar();
+		//progress.setOpaque(false);
 		progress.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.BLACK));
 		progress.setStringPainted(true);
 		progress.setFont(verdana);

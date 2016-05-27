@@ -1,7 +1,5 @@
 package main;
 
-import java.io.File;
-
 import javax.swing.UIManager;
 
 import main.JarInstaller.InstallType;
@@ -26,7 +24,10 @@ public class Installer {
 	}
 	
 	public static String getModifiedFilePath(String filePath) {
-		return filePath.replace("/", File.separator).replace("\\s+", "").trim();
+		if(!System.getProperty("os.name").contains("mac"))
+			return filePath.replaceAll("[/]", "\\\\");
+		
+		return filePath;
 	}
 
 }
