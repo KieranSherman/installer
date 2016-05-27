@@ -1,4 +1,4 @@
-package main;
+package components;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -22,7 +22,7 @@ import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
-import main.JarInstaller.InstallType;
+import components.JarInstaller.InstallType;
 
 public class GraphicalUI extends JarInstallerUI {
 	
@@ -125,8 +125,8 @@ public class GraphicalUI extends JarInstallerUI {
 				new Thread() {
 					public void run() {
 						try {
-							installer.setExtractionDir(Installer.getModifiedFilePath(extractionDir));
-							installer.setExtractionName(Installer.getModifiedFilePath(extractionName+"/"));
+							installer.setExtractionDir(JarInstaller.getModifiedFilePath(extractionDir));
+							installer.setExtractionName(JarInstaller.getModifiedFilePath(extractionName+"/"));
 							installer.install(InstallType.INCLUDE_ONLY, "files");
 						} catch (Exception e) {
 							installer.quit(e);
