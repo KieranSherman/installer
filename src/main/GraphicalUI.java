@@ -43,7 +43,12 @@ public class GraphicalUI extends JarInstallerUI {
 	private String extractionDir;
 	private String extractionName;
 	
-	public GraphicalUI(JarInstaller jarInstaller) {
+	public GraphicalUI(JarInstaller installer) {
+		super(installer);
+	}
+
+	@Override
+	protected void load() {
 		JLabel header = new JLabel("INSTALLER");
 		header.setOpaque(true);
 		header.setHorizontalAlignment(JLabel.CENTER);
@@ -120,11 +125,11 @@ public class GraphicalUI extends JarInstallerUI {
 				new Thread() {
 					public void run() {
 						try {
-							jarInstaller.setExtractinonDir(extractionDir);
-							jarInstaller.setExtractionName(extractionName+File.separator);
-							jarInstaller.install(InstallType.INCLUDE_ONLY, "files");
+							installer.setExtractionDir(Installer.getModifiedFilePath(extractionDir));
+							installer.setExtractionName(Installer.getModifiedFilePath(extractionName+"/"));
+							installer.install(InstallType.INCLUDE_ONLY, "files");
 						} catch (Exception e) {
-							jarInstaller.quit(e);
+							installer.quit(e);
 							System.exit(1);
 						}
 					}
@@ -254,7 +259,7 @@ public class GraphicalUI extends JarInstallerUI {
 		finishButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				Runtime.getRuntime().removeShutdownHook(shutdownHook);
-				jarInstaller.removeTempJarFile();
+				installer.removeTempJarFile();
 				window.dispose();
 			}
 		});
@@ -295,7 +300,7 @@ public class GraphicalUI extends JarInstallerUI {
 		super.window.setResizable(false);
 		super.window.setVisible(true);
 	}
-
+	
 	@Override
 	protected void setShutdownHook(Thread shutdownHook) {
 		this.shutdownHook = shutdownHook;

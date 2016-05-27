@@ -16,6 +16,8 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.border.EmptyBorder;
 
+import main.JarInstaller.InstallType;
+
 /**
  * Class shows a visual representation of a {@link JarInstaller}'s progress.
  * 
@@ -32,14 +34,27 @@ public class DefaultUI extends JarInstallerUI {
 	private volatile JLabel info;
 	private JButton finish;
 	
+	public DefaultUI(JarInstaller installer) {
+		super(installer);
+	}
+	
+	@Override
+	protected void load() {
+		installer.setExtractionDir(Installer.getModifiedFilePath(System.getProperty("user.home")+"/Desktop/"));
+		installer.setExtractionName(Installer.getModifiedFilePath("textgame/"));
+		
+		try {
+			installer.install(InstallType.INCLUDE_ONLY, "files");
+		} catch (Exception e) {
+			installer.quit(e);
+		}
+	}
+	
 	/**
 	 * Displays a GUI representation of the progress.
 	 */
 	@Override
 	protected boolean display() {
-		if(shutdownHook == null)
-			return false;
-		
 		progress = new JProgressBar();
 		progress.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.BLACK));
 		progress.setStringPainted(true);
