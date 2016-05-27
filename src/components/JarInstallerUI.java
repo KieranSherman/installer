@@ -9,6 +9,12 @@ public abstract class JarInstallerUI {
 	protected Thread shutdownHook;
 	protected JarInstaller installer;
 	
+	/**
+	 * Creates a new JarInstallerUI object with a JarInstaller reference.  Also
+	 * sets the look and feel to MetalLookAndFeel.
+	 * 
+	 * @param installer
+	 */
 	public JarInstallerUI(JarInstaller installer) {
 		try {
 			UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
@@ -27,6 +33,5 @@ public abstract class JarInstallerUI {
 	protected abstract void setText(String line);
 	protected abstract void setMaximumProgress(int value);
 	protected abstract void incrementProgress(int value);
-	protected abstract void dispose();
 
 }

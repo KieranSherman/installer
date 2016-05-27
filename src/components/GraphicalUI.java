@@ -24,6 +24,12 @@ import javax.swing.border.EmptyBorder;
 
 import components.JarInstaller.InstallType;
 
+/**
+ * Class models a graphical installer.
+ * 
+ * @author kieransherman
+ *
+ */
 public class GraphicalUI extends JarInstallerUI {
 	
 	private Thread shutdownHook;
@@ -43,10 +49,18 @@ public class GraphicalUI extends JarInstallerUI {
 	private String extractionDir;
 	private String extractionName;
 	
+	/**
+	 * Creates a new GraphicalUI with a JarInstaller reference.
+	 * 
+	 * @param installer the JarInstaller.
+	 */
 	public GraphicalUI(JarInstaller installer) {
 		super(installer);
 	}
 
+	/**
+	 * Displays the GUI.
+	 */
 	@Override
 	protected void load() {
 		JLabel header = new JLabel("INSTALLER");
@@ -301,17 +315,25 @@ public class GraphicalUI extends JarInstallerUI {
 		super.window.setVisible(true);
 	}
 	
+	/**
+	 * Sets the shutdown hook.
+	 */
 	@Override
 	protected void setShutdownHook(Thread shutdownHook) {
 		this.shutdownHook = shutdownHook;
 	}
 	
+	/**
+	 * Returns true because there are no conflicts.
+	 */
 	@Override
 	protected boolean display() {
-		
 		return true;
 	}
 
+	/**
+	 * Sets the finish button to enable.
+	 */
 	@Override
 	protected void setEnabled(boolean enabled) {
 		progressField.setForeground(light_gold);
@@ -320,6 +342,9 @@ public class GraphicalUI extends JarInstallerUI {
 				BorderFactory.createMatteBorder(1, 1, 1, 1, light_gold)));
 	}
 
+	/**
+	 * Logs a line of text.
+	 */
 	@Override
 	protected void log(String line) {
 		System.out.println(line);
@@ -327,24 +352,28 @@ public class GraphicalUI extends JarInstallerUI {
 		progressField.setText(line);
 	}
 
+	/**
+	 * Sets the progress text field's text.
+	 */
 	@Override
 	protected void setText(String line) {
 		progressField.setText(line);
 	}
 
+	/**
+	 * Sets the maximum progress of the progress bar.
+	 */
 	@Override
 	protected void setMaximumProgress(int value) {
 		progressBar.setMaximum(value);
 	}
 
+	/**
+	 * Increments the progress bar by value.
+	 */
 	@Override
 	protected void incrementProgress(int value) {
 		progressBar.setValue(progressBar.getValue()+value);
-	}
-
-	@Override
-	protected void dispose() {
-		
 	}
 
 }

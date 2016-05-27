@@ -19,7 +19,9 @@ import javax.swing.border.EmptyBorder;
 import components.JarInstaller.InstallType;
 
 /**
- * Class shows a visual representation of a {@link JarInstaller}'s progress.
+ * Class shows a visual representation of a {@link JarInstaller}'s progress, but does not
+ * give the user any option to adjust the installation.  The directory of installation will
+ * be the user's Desktop, and the folder will be "textgame".
  * 
  * @author kieransherman
  *
@@ -34,10 +36,18 @@ public class DefaultUI extends JarInstallerUI {
 	private volatile JLabel info;
 	private JButton finish;
 	
+	/**
+	 * Creates a new DefaultUI object with a JarInstaller reference.
+	 * 
+	 * @param installer the JarInstaller.
+	 */
 	public DefaultUI(JarInstaller installer) {
 		super(installer);
 	}
 	
+	/**
+	 * Begins the installation process.
+	 */
 	@Override
 	protected void load() {
 		installer.setExtractionDir(JarInstaller.getModifiedFilePath(System.getProperty("user.home")+"/Desktop/"));
@@ -182,15 +192,10 @@ public class DefaultUI extends JarInstallerUI {
 	protected void incrementProgress(int value) {
 		progress.setValue(progress.getValue()+value);
 	}
-	
-	/**
-	 * Disposes the window.
-	 */
-	@Override
-	protected void dispose() {
-		window.dispose();
-	}
 
+	/**
+	 * Sets the shutdown hook.
+	 */
 	@Override
 	protected void setShutdownHook(Thread shutdownHook) {
 		this.shutdownHook = shutdownHook;

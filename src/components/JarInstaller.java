@@ -70,10 +70,16 @@ public class JarInstaller {
 		this.jarInstallerUI.load();
 	}
 	
+	/**
+	 * Sets the extraction folder's name.
+	 */
 	protected void setExtractionName(String extractionName) {
 		this.extractionName = extractionName;
 	}
 	
+	/**
+	 * Sets the path to the extraction directory.
+	 */
 	protected void setExtractionDir(String extractionDir) {
 		this.extractionDir = extractionDir;
 	}
@@ -262,6 +268,9 @@ public class JarInstaller {
 		return writerThread;
 	}
 	
+	/**
+	 * Removes the temporary jar file.
+	 */
 	protected boolean removeTempJarFile() {
 		File tmpJar = new File(tempJarFilePath);
 		return tmpJar.delete();
@@ -313,6 +322,9 @@ public class JarInstaller {
 		return hidden;
 	}
 	
+	/**
+	 * Returns a new String containing operating system-specific file separators.
+	 */
 	public static String getModifiedFilePath(String filePath) {
 		if(!System.getProperty("os.name").toLowerCase().contains("mac"))
 			return filePath.replaceAll("[/]", "\\\\");
