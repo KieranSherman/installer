@@ -23,7 +23,7 @@ import components.JarInstallerUI.InstallationUI;
  * Class models an installer that extracts contents from a .jar file and moves them to a directory.
  * 
  * @author kieransherman
- * @version 1.06
+ * @version 1.07
  *
  */
 public final class JarInstaller {
