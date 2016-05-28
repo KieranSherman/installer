@@ -157,6 +157,8 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 				nameField.setEditable(true);
 				nameField.setEnabled(true);
 				
+				header.setForeground(dark_gray);
+				
 				extractionDir = directoryField.getText()+File.separator;
 				textOpacity = 0.0f;
 				status++;
@@ -170,7 +172,7 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 		
 		JPanel directoryPanel = new JPanel(new BorderLayout());
 		directoryPanel.setBackground(dark_gray);
-		directoryPanel.setBorder(new EmptyBorder(0, 40, 10, 40));
+		directoryPanel.setBorder(new EmptyBorder(0, 30, 10, 30));
 		directoryPanel.add(directoryField, BorderLayout.CENTER);
 		directoryPanel.add(directoryHeader, BorderLayout.NORTH);
 		directoryPanel.add(directoryButtons, BorderLayout.SOUTH);
@@ -233,6 +235,8 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 				nameConfirmButton.setEnabled(false);
 				nameField.setEnabled(false);
 				
+				header.setForeground(light_gold);
+				
 				directoryConfirmButton.setEnabled(true);
 				directoryChangeButton.setEnabled(true);
 				
@@ -248,7 +252,7 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 		
 		JPanel namePanel = new JPanel(new BorderLayout());
 		namePanel.setBackground(dark_gray);
-		namePanel.setBorder(new EmptyBorder(0, 40, 10, 40));
+		namePanel.setBorder(new EmptyBorder(0, 30, 10, 30));
 		namePanel.add(nameField, BorderLayout.CENTER);
 		namePanel.add(nameHeader, BorderLayout.NORTH);
 		namePanel.add(nameButtons, BorderLayout.SOUTH);
@@ -336,7 +340,7 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 		
 		JPanel confirmPanel = new JPanel(new BorderLayout());
 		confirmPanel.setBackground(dark_gray);
-		confirmPanel.setBorder(new EmptyBorder(0, 40, 10, 40));
+		confirmPanel.setBorder(new EmptyBorder(0, 30, 10, 30));
 		confirmPanel.add(finalField, BorderLayout.CENTER);
 		confirmPanel.add(confirmHeader, BorderLayout.NORTH);
 		confirmPanel.add(finalButtons, BorderLayout.SOUTH);
@@ -371,7 +375,7 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 		
 		JPanel progressPanel = new JPanel(new BorderLayout());
 		progressPanel.setBackground(dark_gray);
-		progressPanel.setBorder(new EmptyBorder(0, 40, 10, 40));
+		progressPanel.setBorder(new EmptyBorder(0, 30, 10, 30));
 		progressPanel.add(progressHeader, BorderLayout.NORTH);
 		progressPanel.add(progressBar, BorderLayout.CENTER);
 		progressPanel.add(progressField, BorderLayout.SOUTH);
@@ -380,12 +384,12 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 	}
 	
 	private JPanel getHeaderPanel() {
-		header = new JLabel("INSTALLER");
+		header = new JLabel("INSTALLER v1.09");
 		header.setOpaque(false);
 		header.setHorizontalAlignment(JLabel.CENTER);
 		header.setVerticalAlignment(JLabel.CENTER);
 		header.setBorder(new EmptyBorder(10, 10, 7, 10));
-		header.setFont(tahoma.deriveFont(16f));
+		header.setFont(tahoma.deriveFont(15f));
 		header.setForeground(light_gold);
 		
 		JPanel panel = new JPanel();
@@ -421,6 +425,7 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 		endFinishButton.setVisible(false);
 		
 		endCancelButton = new JButton("cancel");
+		endCancelButton.setBounds(30, 10, 640, 40);
 		endCancelButton.setFont(tahoma);
 		endCancelButton.setBackground(dark_gray);
 		endCancelButton.setForeground(lighter_blue);
@@ -439,6 +444,7 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 			public void paint(Graphics g) {
 				super.paint(g);
 				
+				g.setFont(tahoma);
 				g.setColor(light_gold);
 				
 				String str = status+"/3";
@@ -458,7 +464,6 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 				g.fillRect(0, 0, this.getWidth(), selectY-1);
 				
 				g.setColor(Color.WHITE);
-				g.setFont(tahoma);
 				
 				if(status == 0) {
 					str = "";
@@ -466,7 +471,6 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 					folderOpacity = 0.0f;
 					folderY = -40;
 					
-					header.setForeground(dark_gray);
 					str = "Writing to: "+extractionDir+nameField.getText()+"\n"+str;
 				} else if (status == 2) {
 					str = "Everything look okay?\n"+str;
@@ -538,7 +542,6 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 		
 		JPanel buttonPanel = new JPanel(null);
 		buttonPanel.setOpaque(false);
-		endCancelButton.setBounds(40, 10, 620, 40);
 		buttonPanel.add(endCancelButton);
 		buttonPanel.add(endFinishButton);
 		buttonPanel.setPreferredSize(new Dimension(700, 65));
@@ -588,7 +591,7 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 			public void run() {
 				progressField.setForeground(light_gold);
 
-				try {Thread.sleep(750);} catch (Exception e) {}
+				try {Thread.sleep(500);} catch (Exception e) {}
 				endFinishButton.setEnabled(true);
 				endCancelButton.setBounds(10, 13, 330, 40);
 				endFinishButton.setBounds(360, 13, 330, 40);
