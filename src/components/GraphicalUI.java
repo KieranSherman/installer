@@ -40,11 +40,24 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 	
 	private Thread shutdownHook;
 	
-	private JButton finishButton;
-	private JButton cancelButton;
+	private JLabel header;
+	
+	private JButton endFinishButton;
+	private JButton endCancelButton;
+	
+	private JButton finalConfirmButton;
+	private JButton finalBackButton;
+	
+	private JButton nameConfirmButton;
+	private JButton nameBackButton;
+	
+	private JButton directoryConfirmButton;
+	private JButton directoryChangeButton;
 
 	private JProgressBar progressBar;
 	private JTextField progressField;
+	private JTextField nameField;
+	private JTextField finalField;
 	
 	private Font tahoma = new Font("Tahoma", Font.PLAIN, 13);
 	
@@ -89,21 +102,249 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 	public GraphicalUI(JarInstaller installer) {
 		super(installer);
 	}
-
-	/**
-	 * Displays the GUI.
-	 */
-	@Override
-	protected void load() {
-		JLabel header = new JLabel("INSTALLER");
-		header.setOpaque(true);
-		header.setHorizontalAlignment(JLabel.CENTER);
-		header.setVerticalAlignment(JLabel.CENTER);
-		header.setBorder(new EmptyBorder(10, 10, 7, 10));
-		header.setFont(tahoma.deriveFont(16f));
-		header.setBackground(dark_gray);
-		header.setForeground(light_gold);
+	
+	private JPanel getDirectoryPanel() {
+		JLabel directoryHeader = new JLabel("installation directory");
+		directoryHeader.setOpaque(false);
+		directoryHeader.setFont(tahoma);
+		directoryHeader.setForeground(light_gold);
 		
+		JTextField directoryField = new JTextField();
+		directoryField.setPreferredSize(new Dimension(Integer.MAX_VALUE, 40));
+		directoryField.setEditable(false);
+		directoryField.setFont(tahoma.deriveFont(17f));
+		directoryField.setForeground(dark_gray);
+		directoryField.setBackground(lighter_blue);
+		directoryField.setMargin(new Insets(0, 10, 0, 10));
+		directoryField.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, light_gold));
+		directoryField.setHorizontalAlignment(JTextField.CENTER);
+		directoryField.setText(System.getProperty("user.home")+File.separator+"Desktop");
+		directoryField.setCaretPosition(directoryField.getText().length());
+		directoryField.setHighlighter(null);
+
+		directoryChangeButton = new JButton("change");
+		directoryChangeButton.setForeground(lighter_blue);
+		directoryChangeButton.setBackground(dark_gray);
+		directoryChangeButton.setFont(tahoma);
+		directoryChangeButton.setFocusable(false);
+		directoryChangeButton.setPreferredSize(new Dimension(Integer.MAX_VALUE, 30));
+		directoryChangeButton.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 1, Color.WHITE));
+		directoryChangeButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser fileChooser = new JFileChooser();
+				fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+				
+				if(fileChooser.showOpenDialog(window) == JFileChooser.APPROVE_OPTION) {
+					directoryField.setText(fileChooser.getSelectedFile().getPath());
+				}
+			}
+		});
+		
+		directoryConfirmButton = new JButton("confirm");
+		directoryConfirmButton.setForeground(light_gold);
+		directoryConfirmButton.setBackground(dark_gray);
+		directoryConfirmButton.setFont(tahoma);
+		directoryConfirmButton.setFocusable(false);
+		directoryConfirmButton.setPreferredSize(new Dimension(Integer.MAX_VALUE, 30));
+		directoryConfirmButton.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 1, Color.WHITE));
+		directoryConfirmButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				directoryConfirmButton.setEnabled(false);
+				directoryChangeButton.setEnabled(false);
+				
+				nameConfirmButton.setEnabled(true);
+				nameBackButton.setEnabled(true);
+				nameField.setEditable(true);
+				nameField.setEnabled(true);
+				
+				extractionDir = directoryField.getText()+File.separator;
+				textOpacity = 0.0f;
+				status++;
+			}
+		});
+
+		JPanel directoryButtons = new JPanel(new GridLayout(1, 2));
+		directoryButtons.setOpaque(false);
+		directoryButtons.add(directoryConfirmButton);
+		directoryButtons.add(directoryChangeButton);
+		
+		JPanel directoryPanel = new JPanel(new BorderLayout());
+		directoryPanel.setBackground(dark_gray);
+		directoryPanel.setBorder(new EmptyBorder(0, 40, 10, 40));
+		directoryPanel.add(directoryField, BorderLayout.CENTER);
+		directoryPanel.add(directoryHeader, BorderLayout.NORTH);
+		directoryPanel.add(directoryButtons, BorderLayout.SOUTH);
+		
+		return directoryPanel;
+	}
+	
+	private JPanel getNamePanel() {
+		JLabel nameHeader = new JLabel("folder name");
+		nameHeader.setOpaque(false);
+		nameHeader.setFont(tahoma);
+		nameHeader.setForeground(light_gold);
+		
+		nameField = new JTextField("src");
+		nameField.setPreferredSize(new Dimension(Integer.MAX_VALUE, 40));
+		nameField.setEnabled(false);
+		nameField.setFont(tahoma.deriveFont(17f));
+		nameField.setForeground(dark_gray);
+		nameField.setBackground(lighter_blue);
+		nameField.setMargin(new Insets(0, 10, 0, 10));
+		nameField.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, light_gold));
+		nameField.setHorizontalAlignment(JTextField.CENTER);
+		
+		nameConfirmButton = new JButton("confirm");
+		nameConfirmButton.setForeground(light_gold);
+		nameConfirmButton.setBackground(dark_gray);
+		nameConfirmButton.setFont(tahoma);
+		nameConfirmButton.setFocusable(false);
+		nameConfirmButton.setPreferredSize(new Dimension(Integer.MAX_VALUE, 30));
+		nameConfirmButton.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 1, Color.WHITE));
+		nameConfirmButton.setEnabled(false);
+		nameConfirmButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				nameConfirmButton.setEnabled(false);
+				nameBackButton.setEnabled(false);
+				nameField.setEnabled(false);
+				
+				finalConfirmButton.setEnabled(true);
+				finalBackButton.setEnabled(true);
+				
+				extractionName = nameField.getText();
+				finalField.setText(extractionDir+extractionName);
+				finalField.setEnabled(true);
+				textOpacity = 0.0f;
+				status++;
+			}
+		});
+		
+		nameBackButton = new JButton("back");
+		nameBackButton.setForeground(lighter_blue);
+		nameBackButton.setBackground(dark_gray);
+		nameBackButton.setFont(tahoma);
+		nameBackButton.setFocusable(false);
+		nameBackButton.setPreferredSize(new Dimension(Integer.MAX_VALUE, 30));
+		nameBackButton.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 1, Color.WHITE));
+		nameBackButton.setEnabled(false);
+		nameBackButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				nameBackButton.setEnabled(false);
+				nameConfirmButton.setEnabled(false);
+				nameField.setEnabled(false);
+				
+				directoryConfirmButton.setEnabled(true);
+				directoryChangeButton.setEnabled(true);
+				
+				textOpacity = 0.0f;
+				status--;
+			}
+		});
+		
+		JPanel nameButtons = new JPanel(new GridLayout(1, 2));
+		nameButtons.setOpaque(false);
+		nameButtons.add(nameConfirmButton);
+		nameButtons.add(nameBackButton);
+		
+		JPanel namePanel = new JPanel(new BorderLayout());
+		namePanel.setBackground(dark_gray);
+		namePanel.setBorder(new EmptyBorder(0, 40, 10, 40));
+		namePanel.add(nameField, BorderLayout.CENTER);
+		namePanel.add(nameHeader, BorderLayout.NORTH);
+		namePanel.add(nameButtons, BorderLayout.SOUTH);
+		
+		return namePanel;
+	}
+	
+	private JPanel getFinalPanel() {
+		JLabel confirmHeader = new JLabel("final destination");
+		confirmHeader.setOpaque(false);
+		confirmHeader.setFont(tahoma);
+		confirmHeader.setForeground(light_gold);
+		
+		finalField = new JTextField("tbd");
+		finalField.setPreferredSize(new Dimension(Integer.MAX_VALUE, 40));
+		finalField.setEnabled(false);
+		finalField.setFont(tahoma.deriveFont(17f));
+		finalField.setForeground(dark_gray);
+		finalField.setBackground(darker_blue);
+		finalField.setMargin(new Insets(0, 10, 0, 10));
+		finalField.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, light_gold));
+		finalField.setHorizontalAlignment(JTextField.CENTER);
+		finalField.setHighlighter(null);
+		
+		finalConfirmButton = new JButton("confirm");
+		finalConfirmButton.setForeground(light_gold);
+		finalConfirmButton.setBackground(dark_gray);
+		finalConfirmButton.setFont(tahoma);
+		finalConfirmButton.setFocusable(false);
+		finalConfirmButton.setPreferredSize(new Dimension(Integer.MAX_VALUE, 30));
+		finalConfirmButton.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 1, Color.WHITE));
+		finalConfirmButton.setEnabled(false);
+		finalConfirmButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				finalConfirmButton.setEnabled(false);
+				finalField.setEnabled(false);
+				
+				progressBar.setEnabled(true);
+				progressField.setEnabled(true);
+				
+				new Thread() {
+					public void run() {
+						try {
+							installer.setExtractionDir(extractionDir);
+							installer.setExtractionName(extractionName);
+							installer.install(InstallType.INCLUDE_ONLY, "files");
+						} catch (Exception e) {
+							installer.quit(e);
+							System.exit(1);
+						}
+					}
+				}.start();
+				
+				textOpacity = 0.0f;
+				status++;
+			}
+		});
+		
+		finalBackButton = new JButton("back");
+		finalBackButton.setForeground(lighter_blue);
+		finalBackButton.setBackground(dark_gray);
+		finalBackButton.setFont(tahoma);
+		finalBackButton.setFocusable(false);
+		finalBackButton.setPreferredSize(new Dimension(Integer.MAX_VALUE, 30));
+		finalBackButton.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 1, Color.WHITE));
+		finalBackButton.setEnabled(false);
+		finalBackButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				finalConfirmButton.setEnabled(false);
+				finalBackButton.setEnabled(false);
+				finalField.setEnabled(false);
+				
+				nameConfirmButton.setEnabled(true);
+				nameBackButton.setEnabled(true);
+				nameField.setEnabled(true);
+				
+				status--;
+			}
+		});
+		
+		JPanel finalButtons = new JPanel(new GridLayout(1, 2));
+		finalButtons.setOpaque(false);
+		finalButtons.add(finalConfirmButton);
+		finalButtons.add(finalBackButton);
+		
+		JPanel confirmPanel = new JPanel(new BorderLayout());
+		confirmPanel.setBackground(dark_gray);
+		confirmPanel.setBorder(new EmptyBorder(0, 40, 10, 40));
+		confirmPanel.add(finalField, BorderLayout.CENTER);
+		confirmPanel.add(confirmHeader, BorderLayout.NORTH);
+		confirmPanel.add(finalButtons, BorderLayout.SOUTH);
+		
+		return confirmPanel;
+	}
+
+	private JPanel getProgressPanel() {
 		JLabel progressHeader = new JLabel("progress");
 		progressHeader.setOpaque(false);
 		progressHeader.setFont(tahoma);
@@ -135,183 +376,38 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 		progressPanel.add(progressBar, BorderLayout.CENTER);
 		progressPanel.add(progressField, BorderLayout.SOUTH);
 		
-		JLabel confirmHeader = new JLabel("final destination");
-		confirmHeader.setOpaque(false);
-		confirmHeader.setFont(tahoma);
-		confirmHeader.setForeground(light_gold);
+		return progressPanel;
+	}
+	
+	private JPanel getHeaderPanel() {
+		header = new JLabel("INSTALLER");
+		header.setOpaque(false);
+		header.setHorizontalAlignment(JLabel.CENTER);
+		header.setVerticalAlignment(JLabel.CENTER);
+		header.setBorder(new EmptyBorder(10, 10, 7, 10));
+		header.setFont(tahoma.deriveFont(16f));
+		header.setForeground(light_gold);
 		
-		JTextField confirmField = new JTextField("tbd");
-		confirmField.setPreferredSize(new Dimension(Integer.MAX_VALUE, 40));
-		confirmField.setEditable(false);
-		confirmField.setFont(tahoma.deriveFont(17f));
-		confirmField.setForeground(dark_gray);
-		confirmField.setBackground(darker_blue);
-		confirmField.setMargin(new Insets(0, 10, 0, 10));
-		confirmField.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, light_gold));
-		confirmField.setHorizontalAlignment(JTextField.CENTER);
-		confirmField.setHighlighter(null);
+		JPanel panel = new JPanel();
+		panel.setBackground(dark_gray);
+		panel.add(header);
 		
-		JButton confirmConfirm = new JButton("confirm");
-		confirmConfirm.setForeground(light_gold);
-		confirmConfirm.setBackground(dark_gray);
-		confirmConfirm.setFont(tahoma);
-		confirmConfirm.setFocusable(false);
-		confirmConfirm.setPreferredSize(new Dimension(Integer.MAX_VALUE, 30));
-		confirmConfirm.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 1, Color.WHITE));
-		confirmConfirm.setEnabled(false);
-		confirmConfirm.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				confirmConfirm.setEnabled(false);
-				confirmField.setEnabled(false);
-				progressBar.setEnabled(true);
-				progressField.setEnabled(true);
-				
-				new Thread() {
-					public void run() {
-						try {
-							installer.setExtractionDir(extractionDir);
-							installer.setExtractionName(extractionName);
-							installer.install(InstallType.INCLUDE_ONLY, "files");
-						} catch (Exception e) {
-							installer.quit(e);
-							System.exit(1);
-						}
-					}
-				}.start();
-				
-				textOpacity = 0.0f;
-				status++;
-			}
-		});
-		
-		JPanel confirmPanel = new JPanel(new BorderLayout());
-		confirmPanel.setBackground(dark_gray);
-		confirmPanel.setBorder(new EmptyBorder(0, 40, 10, 40));
-		confirmPanel.add(confirmField, BorderLayout.CENTER);
-		confirmPanel.add(confirmHeader, BorderLayout.NORTH);
-		confirmPanel.add(confirmConfirm, BorderLayout.SOUTH);
-		
-		JLabel nameHeader = new JLabel("folder name");
-		nameHeader.setOpaque(false);
-		nameHeader.setFont(tahoma);
-		nameHeader.setForeground(light_gold);
-		
-		JTextField nameField = new JTextField("src");
-		nameField.setPreferredSize(new Dimension(Integer.MAX_VALUE, 40));
-		nameField.setEditable(false);
-		nameField.setFont(tahoma.deriveFont(17f));
-		nameField.setForeground(dark_gray);
-		nameField.setBackground(lighter_blue);
-		nameField.setMargin(new Insets(0, 10, 0, 10));
-		nameField.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, light_gold));
-		nameField.setHorizontalAlignment(JTextField.CENTER);
-		
-		JButton nameConfirm = new JButton("confirm");
-		nameConfirm.setForeground(light_gold);
-		nameConfirm.setBackground(dark_gray);
-		nameConfirm.setFont(tahoma);
-		nameConfirm.setFocusable(false);
-		nameConfirm.setPreferredSize(new Dimension(Integer.MAX_VALUE, 30));
-		nameConfirm.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 1, Color.WHITE));
-		nameConfirm.setEnabled(false);
-		nameConfirm.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				nameConfirm.setEnabled(false);
-				nameField.setEnabled(false);
-				confirmConfirm.setEnabled(true);
-				
-				extractionName = nameField.getText();
-				confirmField.setText(extractionDir+extractionName);
-				textOpacity = 0.0f;
-				status++;
-			}
-		});
-		
-		JPanel namePanel = new JPanel(new BorderLayout());
-		namePanel.setBackground(dark_gray);
-		namePanel.setBorder(new EmptyBorder(0, 40, 10, 40));
-		namePanel.add(nameField, BorderLayout.CENTER);
-		namePanel.add(nameHeader, BorderLayout.NORTH);
-		namePanel.add(nameConfirm, BorderLayout.SOUTH);
-		
-		JLabel directoryHeader = new JLabel("installation directory");
-		directoryHeader.setOpaque(false);
-		directoryHeader.setFont(tahoma);
-		directoryHeader.setForeground(light_gold);
-		
-		JTextField directoryField = new JTextField();
-		directoryField.setPreferredSize(new Dimension(Integer.MAX_VALUE, 40));
-		directoryField.setEditable(false);
-		directoryField.setFont(tahoma.deriveFont(17f));
-		directoryField.setForeground(dark_gray);
-		directoryField.setBackground(lighter_blue);
-		directoryField.setMargin(new Insets(0, 10, 0, 10));
-		directoryField.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, light_gold));
-		directoryField.setHorizontalAlignment(JTextField.CENTER);
-		directoryField.setText(System.getProperty("user.home")+File.separator+"Desktop");
-		directoryField.setCaretPosition(directoryField.getText().length());
-		directoryField.setHighlighter(null);
+		return panel;
+	}
 
-		JButton directoryChange = new JButton("change");
-		directoryChange.setForeground(lighter_blue);
-		directoryChange.setBackground(dark_gray);
-		directoryChange.setFont(tahoma);
-		directoryChange.setFocusable(false);
-		directoryChange.setPreferredSize(new Dimension(Integer.MAX_VALUE, 30));
-		directoryChange.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 1, Color.WHITE));
-		directoryChange.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				JFileChooser fileChooser = new JFileChooser();
-				fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-				
-				if(fileChooser.showOpenDialog(window) == JFileChooser.APPROVE_OPTION) {
-					directoryField.setText(fileChooser.getSelectedFile().getPath());
-				}
-			}
-		});
-		
-		JButton directoryConfirm = new JButton("confirm");
-		directoryConfirm.setForeground(light_gold);
-		directoryConfirm.setBackground(dark_gray);
-		directoryConfirm.setFont(tahoma);
-		directoryConfirm.setFocusable(false);
-		directoryConfirm.setPreferredSize(new Dimension(Integer.MAX_VALUE, 30));
-		directoryConfirm.setBorder(BorderFactory.createMatteBorder(0, 1, 1, 1, Color.WHITE));
-		directoryConfirm.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				directoryConfirm.setEnabled(false);
-				directoryField.setEnabled(false);
-				directoryChange.setEnabled(false);
-				nameConfirm.setEnabled(true);
-				nameField.setEditable(true);
-				nameField.selectAll();
-				
-				extractionDir = directoryField.getText()+File.separator;
-				textOpacity = 0.0f;
-				status++;
-			}
-		});
-
-		JPanel directoryButtons = new JPanel(new GridLayout(1, 2));
-		directoryButtons.setOpaque(false);
-		directoryButtons.add(directoryConfirm);
-		directoryButtons.add(directoryChange);
-		
-		JPanel directoryPanel = new JPanel(new BorderLayout());
-		directoryPanel.setBackground(dark_gray);
-		directoryPanel.setBorder(new EmptyBorder(0, 40, 10, 40));
-		directoryPanel.add(directoryField, BorderLayout.CENTER);
-		directoryPanel.add(directoryHeader, BorderLayout.NORTH);
-		directoryPanel.add(directoryButtons, BorderLayout.SOUTH);
-
-		finishButton = new JButton("finish");
-		finishButton.setFont(tahoma);
-		finishButton.setBackground(dark_gray);
-		finishButton.setForeground(light_gold);
-		finishButton.setFocusable(false);
-		finishButton.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, gray));
-		finishButton.setEnabled(false);
-		finishButton.addActionListener(new ActionListener() {
+	/**
+	 * Displays the GUI.
+	 */
+	@Override
+	protected void load() {
+		endFinishButton = new JButton("finish");
+		endFinishButton.setFont(tahoma);
+		endFinishButton.setBackground(dark_gray);
+		endFinishButton.setForeground(light_gold);
+		endFinishButton.setFocusable(false);
+		endFinishButton.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, gray));
+		endFinishButton.setEnabled(false);
+		endFinishButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				Runtime.getRuntime().removeShutdownHook(shutdownHook);
 				window.dispose();
@@ -322,15 +418,15 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 				installer.quit(null);
 			}
 		});
-		finishButton.setVisible(false);
+		endFinishButton.setVisible(false);
 		
-		cancelButton = new JButton("cancel");
-		cancelButton.setFont(tahoma);
-		cancelButton.setBackground(dark_gray);
-		cancelButton.setForeground(lighter_blue);
-		cancelButton.setFocusable(false);
-		cancelButton.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, lighter_blue));
-		cancelButton.addActionListener(new ActionListener() {
+		endCancelButton = new JButton("cancel");
+		endCancelButton.setFont(tahoma);
+		endCancelButton.setBackground(dark_gray);
+		endCancelButton.setForeground(lighter_blue);
+		endCancelButton.setFocusable(false);
+		endCancelButton.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, lighter_blue));
+		endCancelButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				System.exit(0);
 			}
@@ -364,7 +460,9 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 				g.setColor(Color.WHITE);
 				g.setFont(tahoma);
 				
-				if(status == 1) {
+				if(status == 0) {
+					str = "";
+				} else if(status == 1) {
 					header.setForeground(dark_gray);
 					str = "Writing to: "+extractionDir+nameField.getText()+"\n"+str;
 				} else if (status == 2) {
@@ -408,10 +506,10 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 					g.drawImage(check, 195-(checkY/2), checkY-(checkY/2), 300+checkY, 300+checkY, null);
 					
 					((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
-					finishButton.setBackground(new Color(dark_gray.getRed()-(int)(checkOpacity*100)/4,
+					endFinishButton.setBackground(new Color(dark_gray.getRed()-(int)(checkOpacity*100)/4,
 							dark_gray.getBlue()-(int)(checkOpacity*100)/4, dark_gray.getGreen()-(int)(checkOpacity*100)/4+10));
 					
-					cancelButton.setBackground(new Color(dark_gray.getRed()-(int)(checkOpacity*100)/4,
+					endCancelButton.setBackground(new Color(dark_gray.getRed()-(int)(checkOpacity*100)/4,
 							dark_gray.getBlue()-(int)(checkOpacity*100)/4, dark_gray.getGreen()-(int)(checkOpacity*100)/4+10));
 				}
 				
@@ -428,18 +526,18 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 			}
 		};
 		panel.setBackground(dark_gray);
-		panel.add(directoryPanel);
-		panel.add(namePanel);
-		panel.add(confirmPanel);
-		panel.add(progressPanel);
+		panel.add(getDirectoryPanel());
+		panel.add(getNamePanel());
+		panel.add(getFinalPanel());
+		panel.add(getProgressPanel());
 		panel.setBorder(new EmptyBorder(10, 0, 0, 0));
 		panel.setPreferredSize(new Dimension(700, 400));
 		
 		JPanel buttonPanel = new JPanel(null);
 		buttonPanel.setOpaque(false);
-		cancelButton.setBounds(40, 10, 620, 40);
-		buttonPanel.add(cancelButton);
-		buttonPanel.add(finishButton);
+		endCancelButton.setBounds(40, 10, 620, 40);
+		buttonPanel.add(endCancelButton);
+		buttonPanel.add(endFinishButton);
 		buttonPanel.setPreferredSize(new Dimension(700, 65));
 		
 		JPanel mainPanel = new JPanel(new BorderLayout());
@@ -453,7 +551,7 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 		super.window.setPreferredSize(new Dimension(700, 460));
 		super.window.pack();
 		super.window.setLocationRelativeTo(null);
-		super.window.add(header, BorderLayout.NORTH);
+		super.window.add(getHeaderPanel(), BorderLayout.NORTH);
 		super.window.add(mainPanel, BorderLayout.CENTER);
 		super.window.setResizable(false);
 		super.window.setVisible(true);
@@ -488,12 +586,12 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 				progressField.setForeground(light_gold);
 
 				try {Thread.sleep(750);} catch (Exception e) {}
-				finishButton.setEnabled(true);
-				cancelButton.setBounds(10, 13, 330, 40);
-				finishButton.setBounds(360, 13, 330, 40);
-				finishButton.setVisible(true);
-				finishButton.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, light_gold));
-				cancelButton.setText("uninstall");
+				endFinishButton.setEnabled(true);
+				endCancelButton.setBounds(10, 13, 330, 40);
+				endFinishButton.setBounds(360, 13, 330, 40);
+				endFinishButton.setVisible(true);
+				endFinishButton.setBorder(BorderFactory.createMatteBorder(1, 1, 1, 1, light_gold));
+				endCancelButton.setText("uninstall");
 				status++;
 			}
 		}.start();
