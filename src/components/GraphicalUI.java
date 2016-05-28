@@ -463,6 +463,9 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 				if(status == 0) {
 					str = "";
 				} else if(status == 1) {
+					folderOpacity = 0.0f;
+					folderY = -40;
+					
 					header.setForeground(dark_gray);
 					str = "Writing to: "+extractionDir+nameField.getText()+"\n"+str;
 				} else if (status == 2) {
