@@ -12,7 +12,7 @@ public class Installer {
 
 		for(String s : args)
 			if(s.contains("skip"))
-				ui = InstallationUI.GRAPHICAL;
+				ui = InstallationUI.DEFAULT;
 		
 		if(ui == null) {
 			int installer = JOptionPane.showOptionDialog(null, "Choose your installer", "Installer", 
