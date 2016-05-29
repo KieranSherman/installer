@@ -4,7 +4,6 @@ import java.awt.AlphaComposite;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -15,7 +14,6 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
-import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -40,59 +38,43 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 	
 	private Thread shutdownHook;
 	
-	private JLabel header;
+	protected JLabel header;
 	
-	private JButton endFinishButton;
-	private JButton endCancelButton;
+	protected JButton endFinishButton;
+	protected JButton endCancelButton;
 	
-	private JButton finalConfirmButton;
-	private JButton finalBackButton;
+	protected JButton finalConfirmButton;
+	protected JButton finalBackButton;
 	
-	private JButton nameConfirmButton;
-	private JButton nameBackButton;
+	protected JButton nameConfirmButton;
+	protected JButton nameBackButton;
 	
-	private JButton directoryConfirmButton;
-	private JButton directoryChangeButton;
+	protected JButton directoryConfirmButton;
+	protected JButton directoryChangeButton;
 
-	private JProgressBar progressBar;
-	private JTextField progressField;
-	private JTextField nameField;
-	private JTextField finalField;
+	protected JProgressBar progressBar;
+	protected JTextField progressField;
+	protected JTextField nameField;
+	protected JTextField finalField;
 	
-	private Font tahoma = new Font("Tahoma", Font.PLAIN, 13);
+	protected JPanel panel;
 	
-	private Color light_gold = new Color(255, 245, 104);
-	private Color darker_blue = new Color(12, 152, 207);
-	private Color lighter_blue = new Color(10, 160, 217);
-	private Color gray = new Color(108, 110, 112);
-	private Color dark_gray = new Color(45, 48, 51);
+	protected String extractionDir;
+	protected String extractionName;
 	
-	private String extractionDir;
-	private String extractionName;
+	protected int status = 2;
+	protected int selectY = 0;
+	protected int checkY = -40;
+	protected float checkOpacity = 0.0f;
 	
-	private int status = 0;
-	private int selectY = 0;
-	private int checkY = -40;
-	private float checkOpacity = 0.0f;
+	protected int folderY = -40;
+	protected float folderOpacity = 0.0f;
 	
-	private int folderY = -40;
-	private float folderOpacity = 0.0f;
+	protected float textOpacity = 0.0f;
 	
-	private float textOpacity = 0.0f;
-	
-	private BufferedImage check = loadImage("check.png");
-	private BufferedImage folder = loadImage("folder.png");
-	private BufferedImage jarfile = loadImage("jarfile.png");
-	
-	private BufferedImage loadImage(String filePath) {
-		try {
-			return ImageIO.read(getClass().getClassLoader().getResourceAsStream(filePath));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		return null;
-	}
+	protected BufferedImage check = loadImage("check.png");
+	protected BufferedImage folder = loadImage("folder.png");
+	protected BufferedImage jarfile = loadImage("jarfile.png");
 	
 	/**
 	 * Creates a new GraphicalUI with a JarInstaller reference.
@@ -103,7 +85,11 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 		super(installer);
 	}
 	
-	private JPanel getDirectoryPanel() {
+	/**
+	 * Returns the directory selection panel.
+	 */
+	
+	protected JPanel getDirectoryPanel() {
 		JLabel directoryHeader = new JLabel("installation directory");
 		directoryHeader.setOpaque(false);
 		directoryHeader.setFont(tahoma);
@@ -180,7 +166,11 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 		return directoryPanel;
 	}
 	
-	private JPanel getNamePanel() {
+
+	/**
+	 * Returns the name selection panel.
+	 */
+	protected JPanel getNamePanel() {
 		JLabel nameHeader = new JLabel("folder name");
 		nameHeader.setOpaque(false);
 		nameHeader.setFont(tahoma);
@@ -260,7 +250,11 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 		return namePanel;
 	}
 	
-	private JPanel getFinalPanel() {
+
+	/**
+	 * Returns the final confirmation panel.
+	 */
+	protected JPanel getFinalPanel() {
 		JLabel confirmHeader = new JLabel("final destination");
 		confirmHeader.setOpaque(false);
 		confirmHeader.setFont(tahoma);
@@ -269,6 +263,7 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 		finalField = new JTextField("tbd");
 		finalField.setPreferredSize(new Dimension(Integer.MAX_VALUE, 40));
 		finalField.setEnabled(false);
+		finalField.setEditable(false);
 		finalField.setFont(tahoma.deriveFont(17f));
 		finalField.setForeground(dark_gray);
 		finalField.setBackground(darker_blue);
@@ -348,7 +343,11 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 		return confirmPanel;
 	}
 
-	private JPanel getProgressPanel() {
+
+	/**
+	 * Returns the progress panel.
+	 */
+	protected JPanel getProgressPanel() {
 		JLabel progressHeader = new JLabel("progress");
 		progressHeader.setOpaque(false);
 		progressHeader.setFont(tahoma);
@@ -383,7 +382,11 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 		return progressPanel;
 	}
 	
-	private JPanel getHeaderPanel() {
+
+	/**
+	 * Returns the header panel.
+	 */
+	protected JPanel getHeaderPanel() {
 		header = new JLabel("INSTALLER v1.09");
 		header.setOpaque(false);
 		header.setHorizontalAlignment(JLabel.CENTER);
@@ -437,7 +440,7 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 			}
 		});
 		
-		JPanel panel = new JPanel(new GridLayout(4, 1)) {
+		panel = new JPanel(new GridLayout(4, 1)) {
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -447,16 +450,16 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 				g.setFont(tahoma);
 				g.setColor(light_gold);
 				
-				String str = status+"/3";
+				String str = (status-2)+"/3";
 				FontMetrics metrics = g.getFontMetrics(tahoma);
 				
 				int rows = ((GridLayout)this.getLayout()).getRows();
 				
-				if(selectY < this.getHeight()/rows*status)
-					selectY += ((this.getHeight()/rows*status)-selectY)/4+1;
+				if(selectY < this.getHeight()/rows*(status-2))
+					selectY += ((this.getHeight()/rows*(status-2))-selectY)/4+1;
 				else
-				if(selectY > this.getHeight()/rows*status)
-					selectY -= (selectY-(this.getHeight()/rows*status))/4-1;
+				if(selectY > this.getHeight()/rows*(status-2))
+					selectY -= (selectY-(this.getHeight()/rows*(status-2)))/4-1;
 				
 				g.drawLine(0, selectY, window.getWidth(), selectY);
 				
@@ -465,14 +468,14 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 				
 				g.setColor(Color.WHITE);
 				
-				if(status == 0) {
+				if(status == 2) {
 					str = "";
-				} else if(status == 1) {
+				} else if(status == 3) {
 					folderOpacity = 0.0f;
 					folderY = -40;
 					
 					str = "Writing to: "+extractionDir+nameField.getText()+"\n"+str;
-				} else if (status == 2) {
+				} else if (status == 4) {
 					str = "Everything look okay?\n"+str;
 					
 					if(folderOpacity < 0.7f)
@@ -483,7 +486,7 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 					
 					((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, folderOpacity));
 					g.drawImage(folder, 105-(folderY/2), 0, 150+folderY, 150+folderY, null);
-				} else if(status == 3) {
+				} else if(status == 5) {
 					str = "Looks good! Just sit back and relax, we're installing your product now.";
 					
 					if(folderY < 50)
@@ -494,7 +497,7 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 
 					((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));
 					g.drawImage(folder, 105-(folderY/2), 0, 150+folderY, 150+folderY, null);
-				} else if (status == 4) {
+				} else if (status == 6) {
 					str = "All done!";
 					
 					if(checkOpacity < 0.7f)
@@ -637,6 +640,9 @@ public class GraphicalUI extends JarInstallerUI implements ActionListener {
 		progressBar.setValue(progressBar.getValue()+value);
 	}
 
+	/**
+	 * Reapints the window.
+	 */
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		window.repaint();
